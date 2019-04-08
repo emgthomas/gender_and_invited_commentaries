@@ -9,68 +9,53 @@ sink(file="./results/descriptive_analyses.txt")
 ## load data
 authors <- readRDS(file="./data/authors_raw.rds")
 publications <- readRDS(file="./data/publications_raw.rds")
+icc_df_all <- readRDS(file="./data/processed_data_all.rds")
+icc_df <- readRDS(file="./data/processed_data_no_missing.rds")
 
 cat("-----------------Number of unique case and control authors of each gender----------------\n\n")
-unique_authors <- authors[,c("AuthorID","Gender","Designation")]
+
+unique_authors <- icc_df_all[,c("auth_id","Gender","case",
+                                "years_in_scopus","Total_Publications_In_Scopus",
+                                "H_Index")]
 unique_authors <- unique_authors[!duplicated(unique_authors),]
-controls <- unique(unique_authors$AuthorID[unique_authors$Designation=="Control"])
-cases <- unique(unique_authors$AuthorID[unique_authors$Designation=="Case"])
+controls <- unique(unique_authors$auth_id[unique_authors$case==0])
+cases <- unique(unique_authors$auth_id[unique_authors$case==1])
 both <- intersect(controls,cases)
-cat(length(both),"authors acted as both cases and controls\n\n")
 
 # actual unique authors, de-duplicating those that act as both case and control
-unique_authors2 <- unique_authors[,c("AuthorID","Gender")]
+unique_authors2 <- unique_authors[,c("auth_id","Gender",
+                                     "years_in_scopus","Total_Publications_In_Scopus",
+                                     "H_Index")]
 unique_authors2 <- unique_authors2[!duplicated(unique_authors2),]
 unique_authors2$status <- "Control"
-unique_authors2$status[unique_authors2$AuthorID %in% cases] <- "Case"
-unique_authors2$status[unique_authors2$AuthorID %in% both] <- "Both"
+unique_authors2$status[unique_authors2$auth_id %in% cases] <- "Case"
+unique_authors2$status[unique_authors2$auth_id %in% both] <- "Both"
 unique_authors2$status <- factor(unique_authors2$status,levels=c("Case","Control","Both"))
 
 require(gmodels)
 cat("Missing gender variable by case/control status:\n")
-CrossTable(unique_authors2$status,unique_authors2$Gender)
+CrossTable(unique_authors2$Gender,unique_authors2$status)
 
-cat("----------------------Number of cases and controls--------------------\n\n")
-cat(sum(authors$case),"ICCs were matched to at least one control\n\n")
-cat("Found",sum(authors$case==0),"controls\n\n")
-n.controls <- aggregate(authors[,"case"],by=list(authors$Publication),FUN = function(x) sum(1-x))
-cat(sum(n.controls$x == 10)/nrow(n.controls),"% of cases had 10 matched controls\n\n\n\n")
-print("Number of case and control authors:")
-table(unique_authors$Designation)
+cat("-----------------Seniority metrics for unique authors by case status----------------\n\n")
 
-cat(length(unique(publications$citing)),"potential case publications\n\n")
-cat("Found at least one matched control for",length(unique(authors$Publication)),"of these, or",
-    length(unique(authors$Publication))/length(unique(publications$citing)),"%")
+cat("\n\n----Years since first publication----\n\n")
+tapply(unique_authors2$years_in_scopus,unique_authors2$status,summary)
+cat("All:\n\n")
+summary(unique_authors2$years_in_scopus)
 
-cat("\n",length(unique(publications$pub_source_title)),"journals included before processing")
+cat("\n\n----Number of publications----\n\n")
+tapply(unique_authors2$Total_Publications_In_Scopus,unique_authors2$status,summary)
+cat("All:\n\n")
+summary(unique_authors2$Total_Publications_In_Scopus)
 
-cat("\n\n------------Descriptive analyses with missing data removed (processed data)----------------")
+cat("\n\n----H-Index----\n\n")
+tapply(unique_authors2$H_Index,unique_authors2$status,summary)
+cat("All:\n\n")
+summary(unique_authors2$H_Index)
 
-icc_df <- readRDS("./data/processed_data_no_missing.rds")
-
-cat("\n\nFinal numbers of cases and controls:\n")
-table(icc_df$Designation)
-cat("\n")
-n.controls <- aggregate(icc_df[,"case"],by=list(icc_df$Publication),FUN = function(x) sum(1-x))
-cat("Summary of number of controls per case:\n")
-summary(n.controls$x)
-cat("\n")
-cat("Fraction of cases with 10 controls:",sum(n.controls$x == 10)/nrow(n.controls),"\n\n")
-cat("Fraction of cases with >8 controls:",sum(n.controls$x >= 9)/nrow(n.controls),"\n\n")
-cat("Fraction of cases with >7 controls:",sum(n.controls$x >= 8)/nrow(n.controls),"\n\n")
-
-# How many unique authors?
-cat(length(unique(icc_df$AuthorID)),"unique authors in study (cases and controls)\n\n")
-cases <- unique(icc_df$AuthorID[icc_df$case==1])
-controls <- unique(icc_df$AuthorID[icc_df$case==0])
-both <- intersect(cases,controls)
-cases.only <- cases[!(cases %in% controls)]
-cat(length(cases.only),"authors were cases only\n\n")
-controls.only <- controls[!(controls %in% cases)]
-cat(length(controls.only),"authors were controls only\n\n")
-cat(length(both),"authors were both cases and controls\n\n")
-
-cat("\n",length(unique(publications$pub_source_title[publications$citing %in% icc_df$Publication])),"journals included after processing")
+cat("\n\n-----------------Number of controls per case included in analysis----------------\n\n")
+n_controls <- tapply(1-icc_df$case,icc_df$pub_id,sum)
+summary(n_controls)
 
 sink()
 

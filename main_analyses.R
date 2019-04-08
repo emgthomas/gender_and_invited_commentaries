@@ -10,35 +10,47 @@ require(metafor)
 require(splines)
 
 # record output
-sink(file="./results/main_analyses.txt")
+sink(file="./results/main_analyses2.txt")
 
 ## load data
 icc_df <- readRDS(file="./data/processed_data_no_missing.rds")
 
 cat("\n\n------------ One-stage meta-analysis, all journals ----------------\n\n")
-all_1stage <- clogit(case ~ Gender + strata(Publication), data = icc_df)
+all_1stage <- clogit(case ~ Gender + strata(pub_id), data = icc_df)
 cat("---Unadjusted analysis---\n")
 summary(all_1stage)
 
-cat("\n\n---Adjusted for author seniority---\n")
-all_1stage_adj <- clogit(case ~ Gender + seniority_quintile + strata(Publication), data = icc_df)
+cat("\n\n---Adjusted for measures of seniority using natural cubic splines---\n")
+knots <- c(2.5,5,7.5)
+all_1stage_adj <- clogit(case ~ Gender + ns(years_in_scopus_ptile,knots=knots) + 
+                           ns(h_index_ptile,knots=knots) + ns(n_pubs_ptile,knots=knots) + 
+                           strata(pub_id), data = icc_df)
+summary(all_1stage_adj)
+
+cat("\n\n---Adjusted for measures of seniority as linear terms---\n")
+
+all_1stage_adj <- clogit(case ~ Gender + years_in_scopus_ptile + 
+                           h_index_ptile + n_pubs_ptile + 
+                           strata(pub_id), data = icc_df)
 summary(all_1stage_adj)
 
 ## Progressively excluding more controls based on match quality quantiles
 n_quantiles <- max(icc_df$match_quantile)
-resControls <- as.data.frame(matrix(nrow=n_quantiles,ncol=9))
+resControls <- as.data.frame(matrix(nrow=n_quantiles-1,ncol=9))
 names(resControls) <- c("lowest_decile","n_case","OR","OR_ci.lb","OR_ci.ub",
                                  "n_case.2","OR.2","OR_ci.lb.2","OR_ci.ub.2")
-resControls$lowest_decile <- 1:n_quantiles
-for(i in 1:n_quantiles){
+resControls$lowest_decile <- 1:(n_quantiles-1)
+for(i in 1:(n_quantiles-1)){
   # Prepare dataset
   icc_df_i <- subset(icc_df,match_quantile>=i)
-  which_pubs <- tapply(icc_df_i$case,icc_df_i$Publication,length)
+  which_pubs <- tapply(icc_df_i$case,icc_df_i$pub_id,length)
   which_pubs <- names(which_pubs[which_pubs>1])
-  icc_df_i <- icc_df_i[icc_df_i$Publication %in% which_pubs,]
+  icc_df_i <- icc_df_i[icc_df_i$pub_id %in% which_pubs,]
   # Run models
-  mod <- summary(clogit(case ~ Gender + strata(Publication), data = icc_df_i))
-  mod_adj <- summary(clogit(case ~ Gender + seniority_quintile + strata(Publication), data = icc_df_i))
+  mod <- summary(clogit(case ~ Gender + strata(pub_id), data = icc_df_i))
+  mod_adj <- summary(clogit(case ~ Gender + ns(years_in_scopus_ptile,knots=knots) + 
+                              ns(h_index_ptile,knots=knots) + ns(n_pubs_ptile,knots=knots) + 
+                              strata(pub_id), data = icc_df_i))
   # Store in data frame
   resControls[i,2:9] <- c(mod$nevent,mod$coefficients[2],mod$conf.int[3:4],
                           mod_adj$nevent,mod_adj$coefficients[1,2],mod_adj$conf.int[1,3:4])
@@ -59,12 +71,12 @@ plot1 <- ggplot(resControls_df,aes(x=lowest_decile,y=OR,color=model)) +
   theme(panel.grid.major.x = element_blank())
 
 plot2 <- ggplot(subset(icc_df,case==0),aes(y=Match_Score,x=Gender)) + 
-  geom_boxplot(outlier.shape=NA) + scale_y_continuous(limits=c(0,250))
+  geom_boxplot(outlier.shape=NA) + scale_y_continuous(limits=c(0,110))
 
 cat("\n\n------------ Case control analysis by journal ----------------\n\n")
 
-journals <- icc_df[!duplicated(icc_df$pub_source_title),c("pub_source_title","citescore","include.journal")]
-outputs_df <- data.frame(journal=journals$pub_source_title,
+journals <- icc_df[!duplicated(icc_df$pub_sourceid),c("pub_sourceid","citescore","include.journal")]
+outputs_df <- data.frame(journal=journals$pub_sourceid,
                          n_cases=numeric(length=nrow(journals))+NA,
                          effect=numeric(length=nrow(journals))+NA,
                          sd=numeric(length=nrow(journals))+NA,
@@ -77,11 +89,10 @@ outputs_df <- data.frame(journal=journals$pub_source_title,
                          included=journals$include.journal)
 
 for(i in 1:nrow(journals)){
-  #print(i)
   # Unadjusted model
-  mod <- tryCatch(clogit(case ~ Gender + strata(Publication), 
+  mod <- tryCatch(clogit(case ~ Gender + strata(pub_id), 
                          icc_df, 
-                         subset= pub_source_title == outputs_df$journal[i]),
+                         subset= pub_sourceid == outputs_df$journal[i]),
                   error=function(err) NA) # If the model won't run, return NA
   if(!is.na(mod)){
     outputs_df$effect[i] <- mod$coefficients[1]
@@ -89,12 +100,13 @@ for(i in 1:nrow(journals)){
     outputs_df$pval[i] <- summary(mod)$coefficients[1,5]
     outputs_df$n_cases[i] <- summary(mod)$nevent
   } else {
-    outputs_df$n_cases[i] <- sum(icc_df$pub_source_title == outputs_df$journal[i])
+    outputs_df$n_cases[i] <- sum(icc_df$pub_sourceid == outputs_df$journal[i])
   }
   # Adjusted model
-  mod_adj <- tryCatch(clogit(case ~ Gender + seniority_quintile + strata(Publication), 
+  mod_adj <- tryCatch(clogit(case ~ Gender + ns(years_in_scopus_ptile,knots=knots) + 
+                               ns(h_index_ptile,knots=knots) + ns(n_pubs_ptile,knots=knots) + strata(pub_id), 
                              icc_df, 
-                             subset= pub_source_title == outputs_df$journal[i]),
+                             subset= pub_sourceid == outputs_df$journal[i]),
                       error=function(err) NA) # If the model won't run, return NA
   if(!is.na(mod_adj)){
     outputs_df$effect_adj[i] <- mod_adj$coefficients[1]
@@ -102,11 +114,13 @@ for(i in 1:nrow(journals)){
     outputs_df$pval_adj[i] <- summary(mod_adj)$coefficients[1,5]
     outputs_df$n_cases_adj[i] <- summary(mod_adj)$nevent
   }
+  if((i %% 100)==0) print(i)
 }
 
 cat(sum(!outputs_df$included),"journals did not meet criteria for obtaining individual estimate.\n")
 cat("The criteria are:\n (1) must have at least two matched sets with not all the same gender\n")
 cat("(2) among these matched sets, must have no zero cells when cross-tabulate gender against case status\n")
+
 cat("---Summary of abs(log OR) for journals that did not meet criteria:---\n")
 summary(abs(outputs_df$effect[!outputs_df$included]))
 cat("\n\n---Summary of sd for journals that did not meet criteria:---\n")
@@ -134,14 +148,16 @@ outputs_select$ci_upper_adj <- exp(outputs_select$effect_adj+1.96*outputs_select
 outputs_select$effect_adj[outputs_select$sd_adj > 2] <- NA
 
 # Merge in journal topics
-journal_topics <- readRDS(file = "./data/journal_topics_low.rds")
-journal_topics <- journal_topics[journal_topics$pub_source_title %in% unique(outputs_select$journal),]
+journal_topics <- readRDS(file = "./data/journal_topics.rds")
+journal_topics <- journal_topics[journal_topics$pub_sourceid %in% unique(outputs_select$journal),]
 outputs_select <- merge(outputs_select,journal_topics,
-                        by.x="journal",by.y="pub_source_title",all.x=T,all.y=F)
+                        by.x="journal",by.y="pub_sourceid",all.x=T,all.y=F)
+
 # remove empty topics
-topic_counts <- colSums(outputs_select[,names(outputs_select) %in% names(journal_topics)[-1]])
+topic_counts <- colSums(outputs_select[,names(outputs_select) %in% names(journal_topics)[3:ncol(journal_topics)]],na.rm = T)
 outputs_select[,names(outputs_select) %in% names(topic_counts)[topic_counts==0]] <- NULL
-topics_list <- intersect(names(journal_topics)[-1],names(outputs_select))
+outputs_select[is.na(outputs_select) & col(outputs_select) > 20] <- 0
+topics_list <- intersect(names(journal_topics)[-c(1,2)],names(outputs_select))
 
 # save results for use in plotting
 saveRDS(outputs_select, "./shiny_app/journal_ORs.rds")
