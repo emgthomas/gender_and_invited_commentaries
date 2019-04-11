@@ -8,7 +8,9 @@ require(dplyr)
 
 setwd("/Users/emt380/Documents/PhD_Papers/Gender_bias/R_code/jama_paper/")
 
+#######################################################################
 sink(file="./results/data_cleaning.txt")
+#######################################################################
 
 # Read in publications data
 publications <- readRDS(file="./data/publications_raw.rds")
@@ -190,28 +192,39 @@ icc_df$years_in_scopus_quintile <- as.numeric(quantcut(icc_df$years_in_scopus,q=
 icc_df$h_index_quintile <- as.numeric(quantcut(icc_df$H_Index,q=5))
 icc_df$n_pubs_quintile <- as.numeric(quantcut(icc_df$Total_Publications_In_Scopus,q=5))
 
-# Compute percentiles for seniority measures
+#### Compute percentiles for seniority measures ####
+
+# icc_df
 YiS <- icc_df[,c("years_in_scopus","auth_id")]
 YiS <- YiS[!duplicated(YiS),]
-YiS$years_in_scopus_ptile <- percent_rank(YiS$years_in_scopus)
+YiS$years_in_scopus_ptile <- percent_rank(YiS$years_in_scopus)/0.1
 icc_df <- merge(icc_df,YiS[,c("auth_id","years_in_scopus_ptile")],by="auth_id",all.x=T,all.y=F)
 
 h_index <- icc_df[,c("H_Index","auth_id")]
 h_index <- h_index[!duplicated(h_index),]
-h_index$h_index_ptile <- percent_rank(h_index$H_Index)
+h_index$h_index_ptile <- percent_rank(h_index$H_Index)/0.1
 icc_df <- merge(icc_df,h_index[,c("auth_id","h_index_ptile")],by="auth_id",all.x=T,all.y=F)
 
 n_pubs <- icc_df[,c("Total_Publications_In_Scopus","auth_id")]
 n_pubs <- n_pubs[!duplicated(n_pubs),]
-n_pubs$n_pubs_ptile <- percent_rank(n_pubs$Total_Publications_In_Scopus)
+n_pubs$n_pubs_ptile <- percent_rank(n_pubs$Total_Publications_In_Scopus)/0.1
 icc_df <- merge(icc_df,n_pubs[,c("auth_id","n_pubs_ptile")],by="auth_id",all.x=T,all.y=F)
 
-# Scale these for interpretability
-icc_df$years_in_scopus_ptile <- icc_df$years_in_scopus_ptile/0.1
-icc_df$h_index_ptile <- icc_df$h_index_ptile/0.1
-icc_df$n_pubs_ptile <- icc_df$n_pubs_ptile/0.1
+# icc_df_all
+YiS <- icc_df_all[,c("years_in_scopus","auth_id")]
+YiS <- YiS[!duplicated(YiS),]
+YiS$years_in_scopus_ptile <- percent_rank(YiS$years_in_scopus)/0.1
+icc_df_all <- merge(icc_df_all,YiS[,c("auth_id","years_in_scopus_ptile")],by="auth_id",all.x=T,all.y=F)
 
-sink()
+h_index <- icc_df_all[,c("H_Index","auth_id")]
+h_index <- h_index[!duplicated(h_index),]
+h_index$h_index_ptile <- percent_rank(h_index$H_Index)/0.1
+icc_df_all <- merge(icc_df_all,h_index[,c("auth_id","h_index_ptile")],by="auth_id",all.x=T,all.y=F)
+
+n_pubs <- icc_df_all[,c("Total_Publications_In_Scopus","auth_id")]
+n_pubs <- n_pubs[!duplicated(n_pubs),]
+n_pubs$n_pubs_ptile <- percent_rank(n_pubs$Total_Publications_In_Scopus)/0.1
+icc_df_all <- merge(icc_df_all,n_pubs[,c("auth_id","n_pubs_ptile")],by="auth_id",all.x=T,all.y=F)
 
 # Read in journal topics
 journal_topics <- read.csv(file="./data/All_Journals_ASJC.csv")
@@ -235,4 +248,8 @@ journal_topics_low <- journal_topics_low[,c(ncol(journal_topics_low),1:(ncol(jou
 saveRDS(icc_df_all,file="./data/processed_data_all.rds")
 saveRDS(icc_df,file="./data/processed_data_no_missing.rds")
 saveRDS(journal_topics_low,file="./data/journal_topics.rds")
+
+#######################################################################
+sink()
+#######################################################################
 

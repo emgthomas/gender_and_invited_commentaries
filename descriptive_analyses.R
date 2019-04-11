@@ -12,6 +12,11 @@ publications <- readRDS(file="./data/publications_raw.rds")
 icc_df_all <- readRDS(file="./data/processed_data_all.rds")
 icc_df <- readRDS(file="./data/processed_data_no_missing.rds")
 
+cat("--------------------------------------------------\n\n")
+cat("--------------------- Table 1 --------------------\n\n")
+cat("--------------------------------------------------\n\n")
+
+
 cat("-----------------Number of unique case and control authors of each gender----------------\n\n")
 
 unique_authors <- icc_df_all[,c("auth_id","Gender","case",
@@ -52,6 +57,24 @@ cat("\n\n----H-Index----\n\n")
 tapply(unique_authors2$H_Index,unique_authors2$status,summary)
 cat("All:\n\n")
 summary(unique_authors2$H_Index)
+
+cat("------------------------------------------------------\n\n")
+cat("--------------------- Other stats --------------------\n\n")
+cat("------------------------------------------------------\n\n")
+
+cat("\n\n-----------------Gender distribution of cases and controls----------------\n\n")
+cases <- icc_df[icc_df$case==1,c("Gender","auth_id")]
+cases <- cases[!duplicated(cases$auth_id),]
+cat("\n\n---Cases---\n\n")
+CrossTable(cases$Gender)
+
+controls <- icc_df[icc_df$case==0,c("Gender","auth_id")]
+controls <- controls[!duplicated(controls$auth_id),]
+cat("\n\n---Controls---\n\n")
+CrossTable(controls$Gender)
+
+cat("\n\n-----------------Gender of controls by gender of case----------------\n\n")
+
 
 cat("\n\n-----------------Number of controls per case included in analysis----------------\n\n")
 n_controls <- tapply(1-icc_df$case,icc_df$pub_id,sum)

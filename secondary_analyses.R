@@ -29,100 +29,7 @@ journal_topics <- readRDS(file = "./data/journal_topics.rds")
 journal_topics <- journal_topics[journal_topics$pub_sourceid %in% unique(icc_df$pub_sourceid),]
 
 # Save output
-sink(file="./results/secondary_analyses2.txt")
-
-cat("\n\n------------ Effect modification by author seniority ----------------\n\n")
-
-cat("\n\n***Effect modification by years active***\n\n")
-knots <- c(2.5,5,7.5)
-all_1stage_EM_YiS <- clogit(case ~ Gender + years_in_scopus_ptile:factor(Gender,levels=c("female","male")) + 
-                              ns(years_in_scopus_ptile,knots=knots) + 
-                              ns(h_index_ptile,knots=knots) + ns(n_pubs_ptile,knots=knots) + 
-                           strata(pub_id), data = icc_df)
-summary(all_1stage_EM_YiS)
-
-all_1stage_EM_HI <- clogit(case ~ Gender + h_index_ptile:factor(Gender,levels=c("female","male")) + 
-                             ns(years_in_scopus_ptile,knots=knots) + 
-                             ns(h_index_ptile,knots=knots) + ns(n_pubs_ptile,knots=knots) +
-                              strata(pub_id), data = icc_df)
-
-cat("\n\n***Effect modification by H Index***\n\n")
-summary(all_1stage_EM_HI)
-
-all_1stage_EM_npubs <- clogit(case ~ Gender + n_pubs_ptile:factor(Gender,levels=c("female","male")) + 
-                                ns(years_in_scopus_ptile,knots=knots) + 
-                                ns(h_index_ptile,knots=knots) + ns(n_pubs_ptile,knots=knots) +
-                             strata(pub_id), data = icc_df)
-
-cat("\n\n***Effect modification by number of publications***\n\n")
-summary(all_1stage_EM_npubs)
-
-# Plot main results
-load("./results/main_analyses.Rdata")
-OR_df <- data.frame(mod=c("2-stage unadjusted","2-stage adjusted",
-                          "1-stage unadjusted","1-stage adjusted",
-                          "1-stage adjusted","with effect modfication","by years active","",""),
-                    ptile_YiS=c(rep("",4),c("10th percentile","30th percentile","50th percentile","70th percentile","90th percentile")),
-                    OR=numeric(length=9),ci.lb=numeric(length=9),ci.ub=numeric(length=9))
-
-OR_df$OR <- exp(c(all_2stage$beta[1,1],all_2stage_adj$beta[1,1],
-              all_1stage$coefficients[1],all_1stage_adj$coefficients[1],
-              all_1stage_EM_YiS$coefficients[1] + all_1stage_EM_YiS$coefficients[14],
-              all_1stage_EM_YiS$coefficients[1] + 3*all_1stage_EM_YiS$coefficients[14],
-              all_1stage_EM_YiS$coefficients[1] + 5*all_1stage_EM_YiS$coefficients[14],
-              all_1stage_EM_YiS$coefficients[1] + 7*all_1stage_EM_YiS$coefficients[14],
-              all_1stage_EM_YiS$coefficients[1] + 9*all_1stage_EM_YiS$coefficients[14]))
-
-logOR_se <- c(all_2stage$se[1],all_2stage_adj$se[1],
-              sqrt(all_1stage$var[1]),sqrt(all_1stage_adj$var[1]),
-              sqrt(all_1stage_EM_YiS$var[1,1] + all_1stage_EM_YiS$var[14,14] + 2*all_1stage_EM_YiS$var[1,14]),
-              sqrt(all_1stage_EM_YiS$var[1,1] + 9*all_1stage_EM_YiS$var[14,14] + 2*3*all_1stage_EM_YiS$var[1,14]),
-              sqrt(all_1stage_EM_YiS$var[1,1] + 25*all_1stage_EM_YiS$var[14,14] + 2*5*all_1stage_EM_YiS$var[1,14]),
-              sqrt(all_1stage_EM_YiS$var[1,1] + 49*all_1stage_EM_YiS$var[14,14] + 2*7*all_1stage_EM_YiS$var[1,14]),
-              sqrt(all_1stage_EM_YiS$var[1,1] + 81*all_1stage_EM_YiS$var[14,14] + 2*9*all_1stage_EM_YiS$var[1,14]))
-
-OR_df$ci.lb <- OR_df$OR*exp(-1.96*logOR_se)
-OR_df$ci.ub <- OR_df$OR*exp(1.96*logOR_se)
-
-tablehead <- rbind(c("Model","Years active","OR (95%CI)"),
-                   rep(NA,3))
-tablenum <- cbind(as.character(OR_df$mod),as.character(OR_df$ptile_YiS),
-                  sapply(1:nrow(OR_df),formatting_fun,
-                         or=OR_df$OR,ci.lb=OR_df$ci.lb,ci.ub=OR_df$ci.ub)
-)
-
-tabletext <- rbind(tablehead,tablenum)
-tabletext <- rbind(tabletext[1:4,],rep("",ncol(tabletext)),
-                   tabletext[5:6,],rep("",ncol(tabletext)),
-                   tabletext[7:nrow(tabletext),])
-
-means <- c(NA,NA,OR_df$OR[1:2],NA,OR_df$OR[3:4],NA,OR_df$OR[5:9])
-lowers <- c(NA,NA,OR_df$ci.lb[1:2],NA,OR_df$ci.lb[3:4],NA,OR_df$ci.lb[5:9])
-uppers <- c(NA,NA,OR_df$ci.ub[1:2],NA,OR_df$ci.ub[3:4],NA,OR_df$ci.ub[5:9])
-
-# make plot/table
-my_ticks <- c(2/3,1,3/2)
-attr(my_ticks,"labels") <- c("2/3","1","3/2")
-pdf(file="./results/ORs.pdf",width=8,height=4.5)
-forestplot(tabletext,mean=means,lower=lowers,upper=uppers,
-           align=c("l",rep("r",ncol(tabletext)-1)),
-           zero=1,
-           is.summary=c(TRUE,TRUE,rep(FALSE,nrow(tabletext)-2)),
-           xlab="      Favors Men    Favors Women",
-           graphwidth=unit(100,units="points"),
-           lineheight=unit(22,units="points"),
-           colgap=unit(6,"mm"),
-           line.margin=0.2,
-           txt_gp = fpTxtGp(ticks = gpar(fontfamily = "", cex=0.9),
-                            xlab  = gpar(cex = 1.2)),
-           xlog=TRUE,xticks=my_ticks,xticks.digits=5,
-           grid=T,
-           boxsize=0.3,
-           fn.ci_norm = fpDrawDiamondCI,
-           new_page=F
-)
-dev.off()
-
+sink(file="./results/secondary_analyses.txt")
 
 cat("\n\n------------ Effect modification by journal citescore ----------------\n\n")
 
@@ -355,65 +262,22 @@ for(i in 1:n_topics){
                                                                  meta2_adj_pred$cr.lb,meta2_adj_pred$cr.ub)
 }
 
-# # Repeat analyses for remaining topics (i.e., group all journals not in top 20 topics)
-# cat("\n\n******** Analysing topic all journals not in top",n_topics,"topics ********** \n\n")
-# all_journals <- unique(icc_df$pub_source_title)
-# remaining_journals <- all_journals[!(all_journals %in% journals_analysed)]
-# 
-# # Which journals?
-# icc_topic_i <- icc_df[icc_df$pub_source_title %in% remaining_journals,]
-# outputs_topic_i <- outputs_select[outputs_select$journal %in% remaining_journals,]
-# 
-# # One-stage meta-analysis
-# meta1 <- clogit(case ~ Gender + strata(pub_id), data = icc_topic_i)
-# meta1_summ <- summary(meta1)
-# cat("\n\n--- Unadjusted meta analysis, one-stage:\n")
-# print(meta1_summ)
-# outputs_topics[n_topics+1,c("OR_1stage","ci.lb_1stage","ci.ub_1stage")] <- meta1_summ$conf.int[1,c(1,3,4)]
-# 
-# cat("\n\n--- Adjusted for author seniority, one-stage:\n")
-# meta1_adj <- clogit(case ~ Gender + years_in_scopus_quintile + 
-#                       h_index_quintile + n_pubs_quintile + strata(pub_id), data = icc_topic_i)
-# meta1_adj_summ <- summary(meta1_adj)
-# print(meta1_adj_summ)
-# outputs_topics[n_topics+1,c("OR_adj_1stage","ci.lb_adj_1stage","ci.ub_adj_1stage")] <- meta1_adj_summ$conf.int[1,c(1,3,4)]
-# 
-# outputs_topics$n_cases_1stage[n_topics+1] <- sum(icc_topic_i$case)
-# outputs_topics$n_journals_1stage[n_topics+1] <- length(unique(icc_topic_i$pub_source_title))
-# 
-# # Two-stage meta-analysis
-# meta2 <- rma.mv(effect,sd^2,random=~1|journal,data=outputs_topic_i)
-# cat("\n\n--- Unadjusted meta analysis, two-stage:\n\n")
-# print(summary(meta2))
-# cat("\n\nMean and confidence (ci)/prediction (cr) intervals on odds ratio scale:\n")
-# meta2_pred <- predict(meta2, transf=exp, digits=2)
-# print(meta2_pred)
-# outputs_topics[n_topics+1,c("OR_2stage","ci.lb_2stage","ci.ub_2stage",
-#                    "pi.lb_2stage","pi.ub_2stage")] <- c(meta2_pred$pred,meta2_pred$ci.lb,meta2_pred$ci.ub,
-#                                                         meta2_pred$cr.lb,meta2_pred$cr.ub)
-# 
-# meta2_adj <- rma.mv(effect_adj,sd_adj^2,random=~1|journal,data=outputs_topic_i)
-# cat("\n\n--- Adjusted meta analysis, two-stage:\n\n")
-# print(summary(meta2_adj))
-# cat("\n\nMean and confidence (ci)/prediction (cr) intervals on odds ratio scale:\n")
-# meta2_adj_pred <- predict(meta2_adj, transf=exp, digits=2)
-# print(meta2_adj_pred)
-# outputs_topics[n_topics+1,c("OR_adj_2stage","ci.lb_adj_2stage","ci.ub_adj_2stage",
-#                    "pi.lb_adj_2stage","pi.ub_adj_2stage")] <- c(meta2_adj_pred$pred,meta2_adj_pred$ci.lb,meta2_adj_pred$ci.ub,
-#                                                                 meta2_adj_pred$cr.lb,meta2_adj_pred$cr.ub)
-# 
-# outputs_topics$n_cases_2stage[n_topics+1] <- sum(outputs_topic_i$n_cases)
-# outputs_topics$n_journals_2stage[n_topics+1] <- nrow(outputs_topic_i)
-
 # Sort by ASJC code
 outputs_topics <- outputs_topics[c(order(outputs_topics$ASJC[1:(nrow(outputs_topics)-1)]),nrow(outputs_topics)),]
 
 # Get rid of some bad results
 outputs_topics[outputs_topics$ci.lb_adj_2stage < 0.1,c("OR_adj_2stage","ci.lb_adj_2stage","ci.ub_adj_2stage")] <- NA
 
+# How many significant effects?
+cat(sum(outputs_topics$ci.ub_2stage < 1),"of",nrow(outputs_topics),"topic-specific ORs showed significant bias against women.")
+cat(sum(outputs_topics$ci.ub_adj_2stage < 1,na.rm=T),"of",sum(!is.na(outputs_topics$ci.ub_adj_2stage)),"topic-specific ORs showed significant bias against women.")
+
+save(outputs_topics,file="./results/secondary_analyses.Rdata")
+
 #### Produce forest plot3 #####
 
 load("./results/main_analyses.Rdata")
+load("./results/two_stage_analyses.Rdata")
 
 ## one-stage meta-analysis
 tablehead <- rbind(c("Topic","ASJC","Journals","Cases","OR (95%CI)","AOR (95%CI)"),
@@ -518,7 +382,7 @@ uppers <- rbind(rep(NA,2),rep(NA,2),
 )
 
 # make plot/table
-pdf(file="./results/forestplot_2stage.pdf",width=13,height=17)
+pdf(file="./results/forestplot_2stage_sort.pdf",width=13,height=17)
 forestplot(tabletext,mean=means,lower=lowers,upper=uppers,
            is.summary=c(TRUE,TRUE,rep(FALSE,nrow(outputs_topics)),TRUE),
            align=c("l",rep("r",ncol(tabletext)-1)),

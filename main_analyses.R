@@ -9,13 +9,19 @@ require(survival)
 require(metafor)
 require(splines)
 
-# record output
+#######################################################################
 sink(file="./results/main_analyses2.txt")
+#######################################################################
 
 ## load data
 icc_df <- readRDS(file="./data/processed_data_no_missing.rds")
 
 cat("\n\n------------ One-stage meta-analysis, all journals ----------------\n\n")
+
+# icc_df_case <- icc_df[icc_df$case==1,]
+# pubs.incl <- unique(icc_df_case$pub_id[!duplicated(icc_df_case$auth_id)])
+# icc_df_dedup <- icc_df[icc_df$pub_id %in% pubs.incl]
+# icc_df_dedup$pub_id <- factor(icc_df_dedup$pub_id,levels=unique(icc_df_dedup$pub_id))
 all_1stage <- clogit(case ~ Gender + strata(pub_id), data = icc_df)
 cat("---Unadjusted analysis---\n")
 summary(all_1stage)
@@ -34,44 +40,94 @@ all_1stage_adj <- clogit(case ~ Gender + years_in_scopus_ptile +
                            strata(pub_id), data = icc_df)
 summary(all_1stage_adj)
 
-## Progressively excluding more controls based on match quality quantiles
-n_quantiles <- max(icc_df$match_quantile)
-resControls <- as.data.frame(matrix(nrow=n_quantiles-1,ncol=9))
-names(resControls) <- c("lowest_decile","n_case","OR","OR_ci.lb","OR_ci.ub",
-                                 "n_case.2","OR.2","OR_ci.lb.2","OR_ci.ub.2")
-resControls$lowest_decile <- 1:(n_quantiles-1)
-for(i in 1:(n_quantiles-1)){
-  # Prepare dataset
-  icc_df_i <- subset(icc_df,match_quantile>=i)
-  which_pubs <- tapply(icc_df_i$case,icc_df_i$pub_id,length)
-  which_pubs <- names(which_pubs[which_pubs>1])
-  icc_df_i <- icc_df_i[icc_df_i$pub_id %in% which_pubs,]
-  # Run models
-  mod <- summary(clogit(case ~ Gender + strata(pub_id), data = icc_df_i))
-  mod_adj <- summary(clogit(case ~ Gender + ns(years_in_scopus_ptile,knots=knots) + 
+## Save key results for use in plotting ##
+save(all_1stage,all_1stage_adj,file="./results/main_analyses.Rdata")
+
+cat("\n\n------------ Effect modification by author seniority ----------------\n\n")
+
+cat("\n\n***Effect modification by years active***\n\n")
+knots <- c(2.5,5,7.5)
+all_1stage_EM_YiS <- clogit(case ~ Gender + years_in_scopus_ptile:factor(Gender,levels=c("female","male")) + 
+                              ns(years_in_scopus_ptile,knots=knots) + 
                               ns(h_index_ptile,knots=knots) + ns(n_pubs_ptile,knots=knots) + 
-                              strata(pub_id), data = icc_df_i))
-  # Store in data frame
-  resControls[i,2:9] <- c(mod$nevent,mod$coefficients[2],mod$conf.int[3:4],
-                          mod_adj$nevent,mod_adj$coefficients[1,2],mod_adj$conf.int[1,3:4])
-}
+                              strata(pub_id), data = icc_df)
+summary(all_1stage_EM_YiS)
 
-require(ggplot2)
-require(reshape2)
-resControls_df <- reshape(resControls,direction="long",varying=list(c("n_case","n_case.2"),
-                                                                    c("OR","OR.2"),
-                                                                    c("OR_ci.lb","OR_ci.lb.2"),
-                                                                    c("OR_ci.ub","OR_ci.ub.2")),
-                          times=c("unadjusted","adjusted"))
-names(resControls_df)[2] <- "model"
-resControls_df$lowest_decile <- as.factor(resControls_df$lowest_decile)
-plot1 <- ggplot(resControls_df,aes(x=lowest_decile,y=OR,color=model)) + 
-  geom_pointrange(aes(ymin=OR_ci.lb,ymax=OR_ci.ub)) +
-  ylab("OR (95%CI)") + xlab("Lowest decile of included controls based on match score") +
-  theme(panel.grid.major.x = element_blank())
+all_1stage_EM_HI <- clogit(case ~ Gender + h_index_ptile:factor(Gender,levels=c("female","male")) + 
+                             ns(years_in_scopus_ptile,knots=knots) + 
+                             ns(h_index_ptile,knots=knots) + ns(n_pubs_ptile,knots=knots) +
+                             strata(pub_id), data = icc_df)
 
-plot2 <- ggplot(subset(icc_df,case==0),aes(y=Match_Score,x=Gender)) + 
-  geom_boxplot(outlier.shape=NA) + scale_y_continuous(limits=c(0,110))
+cat("\n\n***Effect modification by H Index***\n\n")
+summary(all_1stage_EM_HI)
+
+all_1stage_EM_npubs <- clogit(case ~ Gender + n_pubs_ptile:factor(Gender,levels=c("female","male")) + 
+                                ns(years_in_scopus_ptile,knots=knots) + 
+                                ns(h_index_ptile,knots=knots) + ns(n_pubs_ptile,knots=knots) +
+                                strata(pub_id), data = icc_df)
+
+cat("\n\n***Effect modification by number of publications***\n\n")
+summary(all_1stage_EM_npubs)
+
+# Plot main results
+deciles <- c(1,3,5,7,9)
+
+OR_df <- data.frame(ptile_YiS=c("10th","30th","50th","70th","90th"),
+                    OR=numeric(length=5),ci.lb=numeric(length=5),ci.ub=numeric(length=5))
+
+OR_df$OR <- exp(all_1stage_EM_YiS$coefficients[1] + deciles*all_1stage_EM_YiS$coefficients[14])
+
+logOR_se <- sqrt(all_1stage_EM_YiS$var[1,1] + deciles^2*all_1stage_EM_YiS$var[14,14] + 2*deciles*all_1stage_EM_YiS$var[1,14])
+
+OR_df$ci.lb <- OR_df$OR*exp(-1.96*logOR_se)
+OR_df$ci.ub <- OR_df$OR*exp(1.96*logOR_se)
+
+tablehead <- rbind(c("Years\nActive","Percentile","Odds ratio"),
+                   rep(NA,3))
+# tablenum <- cbind(as.character(OR_df$ptile_YiS),
+#                   sapply(1:nrow(OR_df),formatting_fun,
+#                          or=OR_df$OR,ci.lb=OR_df$ci.lb,ci.ub=OR_df$ci.ub)
+# )
+unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>0.9 & icc_df$years_in_scopus_ptile<1.1])
+unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>2.8 & icc_df$years_in_scopus_ptile<3.2])
+unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>3.8 & icc_df$years_in_scopus_ptile<4.2])
+unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>6.9 & icc_df$years_in_scopus_ptile<7.1])
+unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>8.94 & icc_df$years_in_scopus_ptile<9.06])
+years <- c(8,14,16,27,38)
+tablenum <- cbind(years,as.character(OR_df$ptile_YiS),
+                  sprintf(OR_df$OR, fmt="%.2f")
+)
+
+tabletext <- rbind(tablehead,tablenum)
+
+means <- c(NA,NA,OR_df$OR)
+lowers <- c(NA,NA,OR_df$ci.lb)
+uppers <- c(NA,NA,OR_df$ci.ub)
+
+# make plot/table
+my_ticks <- c(2/3,1,3/2)
+attr(my_ticks,"labels") <- c("2/3","1","3/2")
+pdf(file="./results/ORs_interaction.pdf",width=7,height=3)
+forestplot(tabletext,mean=means,lower=lowers,upper=uppers,
+           #align=c("l",rep("r",ncol(tabletext)-1)),
+           align=rep("c",3),
+           zero=1,
+           is.summary=c(TRUE,TRUE,rep(FALSE,nrow(tabletext)-2)),
+           col=fpColors(box=c(cols2[5])),
+           xlab="      Favors Men    Favors Women",
+           graphwidth=unit(100,units="points"),
+           lineheight=unit(22,units="points"),
+           colgap=unit(6,"mm"),
+           line.margin=0.2,
+           txt_gp = fpTxtGp(ticks = gpar(fontfamily = "", cex=0.9),
+                            xlab  = gpar(cex = 1.2)),
+           xlog=TRUE,xticks=my_ticks,xticks.digits=5,
+           grid=T,
+           boxsize=0.3,
+           fn.ci_norm = fpDrawDiamondCI,
+           new_page=F
+)
+dev.off()
 
 cat("\n\n------------ Case control analysis by journal ----------------\n\n")
 
@@ -159,38 +215,13 @@ outputs_select[,names(outputs_select) %in% names(topic_counts)[topic_counts==0]]
 outputs_select[is.na(outputs_select) & col(outputs_select) > 20] <- 0
 topics_list <- intersect(names(journal_topics)[-c(1,2)],names(outputs_select))
 
-# save results for use in plotting
+# save results for use in plotting and random effects meta-analysis
 saveRDS(outputs_select, "./shiny_app/journal_ORs.rds")
 saveRDS(topics_list,"./shiny_app/topics_list.rds")
 
-cat("\n\n------------ Meta-analysis, all journals ----------------\n\n")
-
-### Using the rma function should give the same result as rma.mv below.
-# all_2stage <- rma(effect,sd^2,data=outputs_select)
-# summary(all_2stage)
-# predict(all_2stage, transf=exp, digits=2)
-
-cat("********** Undjusted model ************\n\n")
-
-# Meta-analysis for unadjusted model
-all_2stage <- rma.mv(effect,sd^2,random=~1|journal,data=outputs_select)
-cat("---Summary of random effects meta-analysis for unadjusted model---\n\n")
-summary(all_2stage)
-cat("\n\n---Mean and confidence (ci)/prediction (cr) intervals on odds ratio scale---\n\n")
-predict(all_2stage, transf=exp, digits=2)
-
-cat("\n\n********** Adjusted model ************\n\n")
-
-# Meta-analysis for adjusted model
-all_2stage_adj <- rma.mv(effect_adj,sd_adj^2,random=~1|journal,data=outputs_select)
-cat("\n\n---Summary of random effects meta-analysis for adjusted model---\n\n")
-summary(all_2stage_adj)
-cat("\n\n---Mean and confidence (ci)/prediction (cr) intervals on odds ratio scale---\n\n")
-predict(all_2stage_adj, transf=exp, digits=2)
-
+#######################################################################
 sink()
+#######################################################################
 
-## Save key results for use in plotting ##
-save(all_1stage,all_1stage_adj,all_2stage,all_2stage_adj,file="./results/main_analyses.Rdata")
 
 
