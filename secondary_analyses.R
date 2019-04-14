@@ -2,9 +2,11 @@
 # ------------------ Secondary analyses -------------------- #
 # ---------------------------------------------------------- #
 
-setwd("/Users/emt380/Documents/PhD_Papers/Gender_bias/R_code/jama_paper/")
+#######################################################################
+sink(file="./results/secondary_analyses.txt")
+#######################################################################
 
-# packages
+## packages
 require(survival)
 require(metafor)
 require(splines)
@@ -12,14 +14,8 @@ require(forestplot)
 require(plotly)
 require(RColorBrewer)
 
-# functions
-formatting_fun <- function(idx,or,ci.lb,ci.ub){
-  if(!is.na(or[idx])){
-    return(paste0(sprintf(or[idx], fmt="%.2f")," (",sprintf(ci.lb[idx], fmt="%.2f"),",",sprintf(ci.ub[idx], fmt="%.2f"),")"))
-  } else {
-    return("N/A")
-  }
-}
+## global functions
+source("./code/functions.R")
 
 ## load data
 outputs_select <- readRDS(file="./shiny_app/journal_ORs.rds")
@@ -28,37 +24,63 @@ topics_list <- readRDS(file="./shiny_app/topics_list.rds")
 journal_topics <- readRDS(file = "./data/journal_topics.rds")
 journal_topics <- journal_topics[journal_topics$pub_sourceid %in% unique(icc_df$pub_sourceid),]
 
-# Save output
-sink(file="./results/secondary_analyses.txt")
-
 cat("\n\n------------ Effect modification by journal citescore ----------------\n\n")
 
-cat("********** Undjusted model ************\n\n")
+# cat("********** Undjusted model ************\n\n")
 
 # exclude one journal with high outlier citescore
+icc_df_cs <- subset(icc_df,citescore<20)
 outputs_select2 <- subset(outputs_select,citescore<20)
-cat("Journal with outlier citescore of",max(outputs_select$citescore),":",
-    outputs_select$sourcetitle[outputs_select$citescore>20])
+cat("Journal with outlier citescore of",max(icc_df$citescore),":",
+    as.character(unique(icc_df$pub_source_title[icc_df$citescore>20])))
 
 # define knots
 n_knots <- 3 # number of *internal* knots
-citescore_by_pub <- unlist(sapply(1:nrow(outputs_select2),function(idx,n_cases,citescore) rep(citescore[idx],n_cases[idx]),
-                                  n_cases=outputs_select2$n_cases,citescore=outputs_select2$citescore))
+citescore_by_pub <- icc_df_cs$citescore[icc_df_cs$case==1]
 knot_placement <- quantile(citescore_by_pub,probs = seq(0,1,length.out=n_knots+2)[2:(n_knots+1)])
-# run meta-regression
-meta_analysis_cs <- rma.mv(effect,sd^2,random=~1|journal,
-                           mods= ~ ns(citescore,knots=knot_placement),
-                           data=outputs_select2)
-cat("\n\n---Meta-regression on citescore, excluding one journal as outlier---\n\n")
-summary(meta_analysis_cs)
+icc_df_cs$gender <- as.numeric(icc_df_cs$Gender == "female")
+citescore_ns <- ns(icc_df_cs$citescore,knots=knot_placement)
+icc_df_cs$citescore_gender_1 <- citescore_ns[,1]*icc_df_cs$gender
+icc_df_cs$citescore_gender_2 <- citescore_ns[,2]*icc_df_cs$gender
+icc_df_cs$citescore_gender_3 <- citescore_ns[,3]*icc_df_cs$gender
+icc_df_cs$citescore_gender_4 <- citescore_ns[,4]*icc_df_cs$gender
+icc_df_cs$citescore_gender <- icc_df_cs$citescore*icc_df_cs$gender
+
+# run regression with interaction by journal cite score
+knots <- c(2.5,5,7.5)
+all_1stage_cs <- clogit(case ~ gender + 
+                          citescore_gender_1 + citescore_gender_2 + 
+                          citescore_gender_3 + citescore_gender_4 +
+                          strata(pub_id), data = icc_df_cs)
+
+summary(all_1stage_cs)
 
 ###### Plot of journal-specific ORs with meta-regression on citescore ######
-citescore_newmods <- seq(min(outputs_select2$citescore),max(outputs_select2$citescore),0.1)
-citescore_bs <- ns(citescore_newmods,knots=knot_placement)
-plot_citescore <- predict(meta_analysis_cs,newmods=citescore_bs[1:nrow(citescore_bs),1:ncol(citescore_bs)],
-                          transf=exp)
-plot_citescore <- plot_citescore[,c("pred","ci.lb","ci.ub","cr.lb","cr.ub")]
-plot_citescore$citescore <- citescore_newmods
+# set up data for prediction
+n.points <- 1000
+citescore_new <- seq(min(icc_df_cs$citescore),max(icc_df_cs$citescore),length.out = n.points)
+citescore_bs <- ns(citescore_new,knots=knot_placement)
+dat_pred <- as.matrix(data.frame(gender=1,
+                      citescore_gender_1=citescore_bs[,1],citescore_gender_2=citescore_bs[,2],
+                      citescore_gender_3=citescore_bs[,3],citescore_gender_4=citescore_bs[,4]
+                      ))
+# Get predicted values
+varnames <- c("gender","citescore_gender_1","citescore_gender_2",
+              "citescore_gender_3","citescore_gender_4")
+vars <- all_1stage_cs$assign
+vars_num <- as.integer(vars[varnames])
+beta <- all_1stage_cs$coefficients
+vars_beta <- beta[vars_num]
+lp <- dat_pred %*% vars_beta
+# Get standard errors
+v <- all_1stage_cs$var
+v_vars <- v[vars_num,vars_num]
+var_lp <- dat_pred %*% v_vars %*% t(dat_pred)
+se_lp <- sqrt(diag(var_lp))
+# Put into data frame for plotting
+plot_citescore <- data.frame(pred=exp(lp),citescore=citescore_new)
+plot_citescore$ci.lb <- as.numeric(exp(lp - 1.96*se_lp))
+plot_citescore$ci.ub <- as.numeric(exp(lp + 1.96*se_lp))
 
 # Plot
 cols1 <- brewer.pal(9,name="BuGn")
@@ -84,12 +106,7 @@ OR_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~OR,he
             hoverinfo="none",textfont=list(size=20,color=1),
             showlegend=F) %>%
   add_ribbons(x=plot_citescore$citescore,y=plot_citescore$pred,
-              ymin=plot_citescore$cr.lb, ymax=plot_citescore$cr.ub, 
-              hoverinfo="none",
-              color=I(cols2[3]),
-              name="95% prediction interval")%>%
-  add_ribbons(x=plot_citescore$citescore,y=plot_citescore$pred,
-              ymin=plot_citescore$ci.lb, ymax=plot_citescore$ci.ub, 
+              ymin=plot_citescore$ci.lb, ymax=plot_citescore$ci.ub,
               hoverinfo="none",
               color=I(cols2[4]),
               name="95% confidence interval") %>%
@@ -97,7 +114,7 @@ OR_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~OR,he
             hoverinfo="none",
             color=I(cols2[5]),
             # line=list(color=I(cols2[1])),
-            name="Predicted odds ratio")%>%
+            name="Predicted odds ratio") %>%
   # layout
   layout(yaxis = list(title="Odds Ratio (log scale)",range=c(-log(2.2),log(2.2)),type="log",
                       tickvals=c(1/4,1/2,1,2,4,8),
@@ -109,23 +126,38 @@ OR_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~OR,he
   )
 
 # Save as pdf
-export(OR_plot, "./results/OR_metareg.pdf")
+export(OR_plot, "./results/OR_citescore.pdf")
 
 cat("\n\n********** Adjusted model--- ************\n\n")
 
-# Adjusted model
-meta_analysis_cs_adj <- rma.mv(effect_adj,sd_adj^2,random=~1|journal,
-                           mods= ~ ns(citescore,knots=knot_placement),
-                           data=subset(outputs_select2,!is.na(outputs_select2$effect_adj)))
-cat("\n\nMeta-regression on citescore\n\n")
-summary(meta_analysis_cs_adj)
+# run regression
+knots <- c(2.5,5,7.5)
+all_1stage_cs_adj <- clogit(case ~ gender +
+                          citescore_gender_1 + citescore_gender_2 + citescore_gender_3 + citescore_gender_4 +
+                          ns(years_in_scopus_ptile,knots=knots) +
+                          ns(h_index_ptile,knots=knots) + ns(n_pubs_ptile,knots=knots) +
+                          strata(pub_id), data = icc_df_cs)
+
+summary(all_1stage_cs_adj)
 
 ###### Plot of journal-specific ORs with meta-regression on citescore ######
-plot_citescore_adj <- predict(meta_analysis_cs_adj,newmods=citescore_bs[1:nrow(citescore_bs),1:ncol(citescore_bs)],
-                          transf=exp)
-plot_citescore_adj <- plot_citescore_adj[,c("pred","ci.lb","ci.ub","cr.lb","cr.ub")]
-plot_citescore_adj$citescore <- citescore_newmods
+# Get predicted values
+vars <- all_1stage_cs_adj$assign
+vars_num <- as.integer(vars[varnames])
+beta <- all_1stage_cs_adj$coefficients
+vars_beta <- beta[vars_num]
+lp <- dat_pred %*% vars_beta
+# Get standard errors
+v <- all_1stage_cs_adj$var
+v_vars <- v[vars_num,vars_num]
+var_lp <- dat_pred %*% v_vars %*% t(dat_pred)
+se_lp <- sqrt(diag(var_lp))
+# Put into data frame for plotting
+plot_citescore_adj <- data.frame(pred=exp(lp),citescore=citescore_new)
+plot_citescore_adj$ci.lb <- as.numeric(exp(lp - 1.96*se_lp))
+plot_citescore_adj$ci.ub <- as.numeric(exp(lp + 1.96*se_lp))
 
+# Make plot
 OR_adj_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~OR_adj,height=600,width=1000) %>%
   # add horizontal line for null value
   add_trace(x = c(0,18), y= c(1,1), mode = "lines", color=I("black"),
@@ -147,11 +179,6 @@ OR_adj_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~O
             hoverinfo="none",textfont=list(size=20,color=1),
             showlegend=F) %>%
   add_ribbons(x=plot_citescore_adj$citescore,y=plot_citescore_adj$pred,
-              ymin=plot_citescore_adj$cr.lb, ymax=plot_citescore_adj$cr.ub, 
-              hoverinfo="none",
-              color=I(cols2[3]),
-              name="95% prediction interval")%>%
-  add_ribbons(x=plot_citescore_adj$citescore,y=plot_citescore_adj$pred,
               ymin=plot_citescore_adj$ci.lb, ymax=plot_citescore_adj$ci.ub, 
               hoverinfo="none",
               color=I(cols2[4]),
@@ -171,7 +198,7 @@ OR_adj_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~O
   )
 
 # Save as pdf
-export(OR_adj_plot, "./results/OR_adj_metareg.pdf")
+export(OR_adj_plot, "./results/OR_adj_citescore.pdf")
 
 cat("\n\n------------ Sub-group analyses by journal topic ----------------\n\n")
 
@@ -405,6 +432,6 @@ forestplot(tabletext,mean=means,lower=lowers,upper=uppers,
 )
 dev.off()
 
-
+#######################################################################
 sink()
-
+#######################################################################

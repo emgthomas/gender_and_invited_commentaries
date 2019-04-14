@@ -2,15 +2,15 @@
 # --------------------- Data cleaning ---------------------- #
 # ---------------------------------------------------------- #
 
-# packages
-require(data.table)
-require(dplyr)
-
-setwd("/Users/emt380/Documents/PhD_Papers/Gender_bias/R_code/jama_paper/")
-
 #######################################################################
 sink(file="./results/data_cleaning.txt")
 #######################################################################
+
+# packages
+require(data.table)
+require(dplyr)
+require(gtools)
+require(reshape2)
 
 # Read in publications data
 publications <- readRDS(file="./data/publications_raw.rds")
@@ -104,7 +104,6 @@ cat("\n\n------- Flow chart Step 7 (Included)------- \n\n")
 cat("Number of matched sets = ",sum(authors6$case))
 
 # For remaining controls, categorize match score into deciles
-require(gtools)
 authors6$match_quantile <- numeric(length=nrow(authors6)) + NA
 # find quantiles of match score for controls
 authors6$match_quantile[authors6$case==0] <- quantcut(authors6$Match_Score[authors6$case==0],q=10)
@@ -239,7 +238,6 @@ journal_topics <- merge(x=journal_topics,y=topic_names,
                         all.x=T)
 
 # Create dataframe of topics by journal
-require(reshape2)
 journal_topics_low <- dcast(journal_topics,pub_sourceid ~ Low,fun.aggregate = length, value.var="Low")
 journal_topics_low <- merge(journal_topics_low,journal_names,by="pub_sourceid")
 journal_topics_low <- journal_topics_low[,c(ncol(journal_topics_low),1:(ncol(journal_topics_low)-1))]

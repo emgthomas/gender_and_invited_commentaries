@@ -2,16 +2,17 @@
 # --------------- Main analyses ------------------ #
 # ------------------------------------------------ #
 
-setwd("/Users/emt380/Documents/PhD_Papers/Gender_bias/R_code/jama_paper/")
+#######################################################################
+sink(file="./results/main_analyses.txt")
+#######################################################################
 
 # packages
 require(survival)
-require(metafor)
 require(splines)
+require(forestplot)
 
-#######################################################################
-sink(file="./results/main_analyses2.txt")
-#######################################################################
+# global functions
+source("./code/functions.R")
 
 ## load data
 icc_df <- readRDS(file="./data/processed_data_no_missing.rds")
@@ -43,7 +44,7 @@ summary(all_1stage_adj)
 ## Save key results for use in plotting ##
 save(all_1stage,all_1stage_adj,file="./results/main_analyses.Rdata")
 
-cat("\n\n------------ Effect modification by author seniority ----------------\n\n")
+cat("\n\n------------ Effect modification by author-level variables ----------------\n\n")
 
 cat("\n\n***Effect modification by years active***\n\n")
 knots <- c(2.5,5,7.5)
@@ -66,6 +67,7 @@ all_1stage_EM_npubs <- clogit(case ~ Gender + n_pubs_ptile:factor(Gender,levels=
                                 ns(h_index_ptile,knots=knots) + ns(n_pubs_ptile,knots=knots) +
                                 strata(pub_id), data = icc_df)
 
+
 cat("\n\n***Effect modification by number of publications***\n\n")
 summary(all_1stage_EM_npubs)
 
@@ -82,20 +84,18 @@ logOR_se <- sqrt(all_1stage_EM_YiS$var[1,1] + deciles^2*all_1stage_EM_YiS$var[14
 OR_df$ci.lb <- OR_df$OR*exp(-1.96*logOR_se)
 OR_df$ci.ub <- OR_df$OR*exp(1.96*logOR_se)
 
-tablehead <- rbind(c("Years\nActive","Percentile","Odds ratio"),
+tablehead <- rbind(c("Percentile","Years Active","OR (95%CI)"),
                    rep(NA,3))
-# tablenum <- cbind(as.character(OR_df$ptile_YiS),
-#                   sapply(1:nrow(OR_df),formatting_fun,
-#                          or=OR_df$OR,ci.lb=OR_df$ci.lb,ci.ub=OR_df$ci.ub)
-# )
+
 unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>0.9 & icc_df$years_in_scopus_ptile<1.1])
 unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>2.8 & icc_df$years_in_scopus_ptile<3.2])
 unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>3.8 & icc_df$years_in_scopus_ptile<4.2])
 unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>6.9 & icc_df$years_in_scopus_ptile<7.1])
 unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>8.94 & icc_df$years_in_scopus_ptile<9.06])
 years <- c(8,14,16,27,38)
-tablenum <- cbind(years,as.character(OR_df$ptile_YiS),
-                  sprintf(OR_df$OR, fmt="%.2f")
+tablenum <- cbind(as.character(OR_df$ptile_YiS),
+                  years,
+                  sapply(1:nrow(OR_df),formatting_fun,or=OR_df$OR,ci.lb=OR_df$ci.lb,ci.ub=OR_df$ci.ub)
 )
 
 tabletext <- rbind(tablehead,tablenum)

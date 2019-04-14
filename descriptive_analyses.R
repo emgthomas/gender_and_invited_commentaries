@@ -2,9 +2,12 @@
 # --------------- Descriptive analyses ------------------ #
 # ------------------------------------------------------- #
 
-setwd("/Users/emt380/Documents/PhD_Papers/Gender_bias/R_code/jama_paper/")
-
+#######################################################################
 sink(file="./results/descriptive_analyses.txt")
+#######################################################################
+
+## packages
+require(gmodels)
 
 ## load data
 authors <- readRDS(file="./data/authors_raw.rds")
@@ -37,7 +40,6 @@ unique_authors2$status[unique_authors2$auth_id %in% cases] <- "Case"
 unique_authors2$status[unique_authors2$auth_id %in% both] <- "Both"
 unique_authors2$status <- factor(unique_authors2$status,levels=c("Case","Control","Both"))
 
-require(gmodels)
 cat("Missing gender variable by case/control status:\n")
 CrossTable(unique_authors2$Gender,unique_authors2$status)
 
@@ -80,7 +82,8 @@ cat("\n\n-----------------Number of controls per case included in analysis------
 n_controls <- tapply(1-icc_df$case,icc_df$pub_id,sum)
 summary(n_controls)
 
+#######################################################################
 sink()
-
+#######################################################################
 
 
