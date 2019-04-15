@@ -423,20 +423,36 @@ cat("\n\n-----------------------------------------------------------------------
 
 icc_df <- readRDS(file="./data/processed_data_no_missing.rds")
 
+# de-duplicate case authors
 icc_df_case <- icc_df[icc_df$case==1,]
 pubs.incl <- unique(icc_df_case$pub_id[!duplicated(icc_df_case$auth_id)])
 icc_df_dedup <- icc_df[icc_df$pub_id %in% pubs.incl,]
 icc_df_dedup$pub_id <- factor(icc_df_dedup$pub_id,levels=unique(icc_df_dedup$pub_id))
-all_1stage_dedup <- clogit(case ~ Gender + strata(pub_id), data = icc_df_dedup)
+
+# keep only top two controls
+icc_df_dedup <- icc_df_dedup[icc_df_dedup$match_score_rank <= 3,]
+
 cat("---Unadjusted analysis---\n")
+all_1stage_dedup <- clogit(case ~ Gender + strata(pub_id), data = icc_df_dedup)
 summary(all_1stage_dedup)
 
 cat("\n\n---Adjusted for measures of seniority using natural cubic splines---\n")
 knots <- c(2.5,5,7.5)
-all_1stage_dedup_adj <- clogit(case ~ Gender + ns(years_in_scopus_ptile,knots=knots) + 
-                           ns(h_index_ptile,knots=knots) + ns(n_pubs_ptile,knots=knots) + 
+all_1stage_dedup_adj <- clogit(case ~ Gender + 
+                           ns(years_in_scopus_ptile,knots=knots) + 
+                           ns(h_index_ptile,knots=knots) + 
+                           ns(n_pubs_ptile,knots=knots) + 
                            strata(pub_id), data = icc_df_dedup)
 summary(all_1stage_dedup_adj)
+
+cat("\n\n---Including interaction term between gender and years active---\n")
+all_1stage_dedup_int <- clogit(case ~ Gender + 
+                                 years_in_scopus_ptile:factor(Gender,levels=c("female","male")) +
+                                 ns(years_in_scopus_ptile,knots=knots) + 
+                                 ns(h_index_ptile,knots=knots) + 
+                                 ns(n_pubs_ptile,knots=knots) + 
+                                 strata(pub_id), data = icc_df_dedup)
+summary(all_1stage_dedup_int)
 
 #######################################################################
 sink()
