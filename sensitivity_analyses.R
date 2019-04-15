@@ -13,7 +13,8 @@ require(metafor)
 require(dplyr)
 require(ggplot2)
 require(reshape2)
-require(micemd)
+require(lme4)
+require(mice)
 
 cat("\n\n--------------------------------------------------------------------\n\n")
 cat("\n\n--------------------- Two-stage meta-analysis ----------------------\n\n")
@@ -51,6 +52,7 @@ knot_placement <- quantile(citescore_by_pub,probs = seq(0,1,length.out=n_knots+2
 meta_analysis_cs <- rma.mv(effect,sd^2,random=~1|journal,
                            mods= ~ ns(citescore,knots=knot_placement),
                            data=outputs_select2)
+
 cat("\n\n---Meta-regression on citescore, excluding one journal as outlier---\n\n")
 summary(meta_analysis_cs)
 
@@ -133,6 +135,10 @@ meta_analysis_cs_adj <- rma.mv(effect_adj,sd_adj^2,random=~1|journal,
 cat("\n\nMeta-regression on citescore\n\n")
 summary(meta_analysis_cs_adj)
 
+cat("\n\n---Sub-group analyses by journal topic---\n\n")
+cat("See secondary_analyses.R (for ease of coding, sub-group analyses using one-stage 
+and two-stage meta-analysis are performed together)\n\n")
+
 ###### Plot of journal-specific ORs with meta-regression on citescore ######
 plot_citescore_adj <- predict(meta_analysis_cs_adj,newmods=citescore_bs[1:nrow(citescore_bs),1:ncol(citescore_bs)],
                           transf=exp)
@@ -185,6 +191,23 @@ OR_adj_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~O
 
 # Save as pdf
 export(OR_adj_plot, "./results/OR_adj_citescore_metareg.pdf")
+
+cat("\n\n********** Model with interaction ************\n\n")
+
+# Main effect
+all_2stage_int <- rma.mv(effect_int,sd_int^2,random=~1|journal,data=outputs_select)
+cat("\n\n---Summary of random effects meta-analysis for interaction with years active---\n\n")
+cat("\n\n-- Main effect--\n\n")
+summary(all_2stage_int)
+cat("\n\n---Mean and confidence (ci)/prediction (cr) intervals on odds ratio scale---\n\n")
+predict(all_2stage_int, transf=exp, digits=2)
+
+# Interaction term
+all_2stage_int2 <- rma.mv(effect_int2,sd_int2^2,random=~1|journal,data=outputs_select)
+cat("\n\n-- Interaction term--\n\n")
+summary(all_2stage_int2)
+cat("\n\n---Mean and confidence (ci)/prediction (cr) intervals on odds ratio scale---\n\n")
+predict(all_2stage_int2, transf=exp, digits=2)
 
 cat("\n\n---------------------------------------------------------\n\n")
 cat("\n\n--------------------- Missing data ----------------------\n\n")
@@ -264,10 +287,10 @@ summary(mod_impute)
 p_female <- predict(mod_impute,icc_df_to_impute,
                     type="response",
                     allow.new.levels=TRUE)
-# plot predicted probabilities by gender
-ggplot(data.frame(x=factor(icc_df_to_impute$gender),y=p_female),aes(y=y,x=x)) + geom_boxplot()
-# plot predicted probabilities by missingness
-ggplot(data.frame(x=factor(is.na(icc_df_to_impute$gender)),y=p_female),aes(y=y,x=x)) + geom_boxplot()
+# # plot predicted probabilities by gender
+# ggplot(data.frame(x=factor(icc_df_to_impute$gender),y=p_female),aes(y=y,x=x)) + geom_boxplot()
+# # plot predicted probabilities by missingness
+# ggplot(data.frame(x=factor(is.na(icc_df_to_impute$gender)),y=p_female),aes(y=y,x=x)) + geom_boxplot()
 
 # generate imputed datasets
 imputed_dfs <- list()
@@ -282,15 +305,35 @@ saveRDS(imputed_dfs,file="./data/imputed_data.RDS")
 
 # combine results
 imputed_mods <- lapply(imputed_dfs,
+                       FUN=clogit,
+                       formula=case ~ gender + 
+                       strata(pub_id)
+                      ) %>% as.mira
+
+cat("\n\n-- Unadjusted results after multiple imputation --\n\n")
+res_imp <- summary(pool(imputed_mods))
+c(OR=exp(res_imp$estimate),
+      ci.lb=exp(res_imp$estimate - 1.96*res_imp$std.error),
+      ci.ub=exp(res_imp$estimate + 1.96*res_imp$std.error),
+  p.value=res_imp$p.value)
+
+imputed_mods_adj <- lapply(imputed_dfs,
             FUN=clogit,
-            formula=case ~ gender + 
+            formula=case ~ gender +
                      ns(years_in_scopus_ptile,knots=knots) + 
                      ns(h_index_ptile,knots=knots) + ns(n_pubs_ptile,knots=knots) + 
                      strata(pub_id)
               ) %>% as.mira
 
 cat("\n\n-- Adjusted results after multiple imputation --\n\n")
-summary(pool(imputed_mods))
+res_imp_adj <- summary(pool(imputed_mods_adj))
+res_imp_adj_df <- data.frame(
+  OR=exp(res_imp_adj$estimate),
+  ci.lb=exp(res_imp_adj$estimate - 1.96*res_imp_adj$std.error),
+  ci.ub=exp(res_imp_adj$estimate + 1.96*res_imp_adj$std.error),
+  p.value=res_imp_adj$p.value)
+row.names(res_imp_adj_df) <- row.names(res_imp_adj)
+res_imp_adj_df
 
 imputed_mods_int <- lapply(imputed_dfs,
                            FUN=clogit,
@@ -301,7 +344,14 @@ imputed_mods_int <- lapply(imputed_dfs,
                     ) %>% as.mira
 
 cat("\n\n-- Adjusted results with interaction after multiple imputation --\n\n")
-summary(pool(imputed_mods_int))
+res_imp_int <- summary(pool(imputed_mods_int))
+res_imp_int_df <- data.frame(
+  OR=exp(res_imp_int$estimate),
+  ci.lb=exp(res_imp_int$estimate - 1.96*res_imp_int$std.error),
+  ci.ub=exp(res_imp_int$estimate + 1.96*res_imp_int$std.error),
+  p.value=res_imp_int$p.value)
+row.names(res_imp_int_df) <- row.names(res_imp_int)
+res_imp_int_df
 
 cat("\n\n---------------------------------------------------------------------------------\n\n")
 cat("\n\n--------------------- Stricter match criteria for controls ----------------------\n\n")
@@ -313,8 +363,6 @@ icc_df <- readRDS(file="./data/processed_data_no_missing.rds")
 
 all_1stage_int <- clogit(case ~ Gender + 
                            years_in_scopus_ptile:factor(Gender,levels=c("female","male")) + 
-                           #h_index_ptile:factor(Gender,levels=c("female","male")) + 
-                           n_pubs_ptile:factor(Gender,levels=c("female","male")) + 
                            ns(years_in_scopus_ptile,knots=knots) + 
                            ns(h_index_ptile,knots=knots) + 
                            ns(n_pubs_ptile,knots=knots) + 

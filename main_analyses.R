@@ -10,6 +10,8 @@ sink(file="./results/main_analyses.txt")
 require(survival)
 require(splines)
 require(forestplot)
+require(reshape2)
+require(ggplot2)
 
 # global functions
 source("./code/functions.R")
@@ -44,25 +46,340 @@ summary(all_1stage_adj)
 ## Save key results for use in plotting ##
 save(all_1stage,all_1stage_adj,file="./results/main_analyses.Rdata")
 
+###### Plots of continuous variable effects ######
+
+# ------------------- Years active ----------------------#
+# set up data for prediction
+n.points <- 1000
+ptile <- seq(0,10,length.out = n.points)
+ptile_ns <- ns(ptile,knots=knots)
+dat_pred <- ptile_ns[1:nrow(ptile_ns),1:ncol(ptile_ns)]
+# Get predicted values
+varnames <- c("ns(years_in_scopus_ptile, knots = knots)")
+pred_years_in_scopus <- spline_predictions(all_1stage_adj,dat_pred,varnames)
+
+# ------------------- H-index ----------------------#
+# Get predicted values
+varnames <- c("ns(h_index_ptile, knots = knots)")
+pred_h_index <- spline_predictions(all_1stage_adj,dat_pred,varnames)
+
+# ------------------- Number of publications ----------------------#
+# Get predicted values
+varnames <- "ns(n_pubs_ptile, knots = knots)"
+pred_n_pubs <- spline_predictions(all_1stage_adj,dat_pred,varnames)
+
+# Put into data frame for plotting
+plot_effects <- cbind(pred_years_in_scopus,pred_h_index,pred_n_pubs)
+names(plot_effects) <- c("pred1","ci.lb1","ci.ub1",
+                         "pred2","ci.lb2","ci.ub2",
+                         "pred3","ci.lb3","ci.ub3")
+plot_effects$ptile <- ptile*10
+
+# Plot
+cols3 <- brewer.pal(3,name="Accent")
+# Plot
+OR_plot <- plot_ly(plot_effects, x = ~ptile, y= ~pred1, height=600,width=1000) %>%
+  # add horizontal line for null value
+  add_trace(x = c(0,100), y= c(1,1), mode = "lines", color=I("black"),
+            showlegend=F) %>%
+  add_lines(y=plot_effects$pred1, x=plot_effects$ptile,
+            hoverinfo="none",
+            color=I(cols3[1]),
+            showlegend=F) %>%
+  add_ribbons(x=plot_effects$ptile,y=plot_effects$pred1,
+              ymin=plot_effects$ci.lb1, ymax=plot_effects$ci.ub1,
+              hoverinfo="none",
+              color=I(cols3[1]),
+              name="Years active") %>%
+  add_lines(y=plot_effects$pred2, x=plot_effects$ptile,
+            hoverinfo="none",
+            color=I(cols3[2]),
+            showlegend=F) %>%
+  add_ribbons(x=plot_effects$ptile,y=plot_effects$pred2,
+              ymin=plot_effects$ci.lb2, ymax=plot_effects$ci.ub2,
+              hoverinfo="none",
+              color=I(cols3[2]),
+              name="H-index") %>%
+  add_lines(y=plot_effects$pred3, x=plot_effects$ptile,
+            hoverinfo="none",
+            color=I(cols3[3]),
+            showlegend=F) %>%
+  add_ribbons(x=plot_effects$ptile,y=plot_effects$pred3,
+              ymin=plot_effects$ci.lb3, ymax=plot_effects$ci.ub3,
+              hoverinfo="none",
+              color=I(cols3[3]),
+              name="Number of publications") %>%
+  add_trace(x = 50, y = 3, mode="text",text="More invited commentaries",
+            hoverinfo="none",textfont=list(size=20,color=1),
+            showlegend=F) %>%
+  add_trace(x = 50, y = 1/3, mode="text",text="Fewer invited commentaries",
+            hoverinfo="none",textfont=list(size=20,color=1),
+            showlegend=F) %>%
+  # layout
+  layout(yaxis = list(title="Odds ratio relative to 0th percentile (log scale)",range=c(-log(2.1),log(2.1)),type="log",
+                      tickvals=c(1/4,1/2,1,2,4),
+                      ticktext=c("1/4","1/2",
+                                 as.character(c(1,2,4)))),
+         xaxis = list(title="Percentile",range=c(0,100),tickmode="array"),
+         showlegend=T,
+         font=list(size=16)
+  )
+
+export(OR_plot, "./results/OR_by_vars.pdf")
+
 cat("\n\n------------ Effect modification by author-level variables ----------------\n\n")
 
+# -------------------- Years active --------------------- #
 cat("\n\n***Effect modification by years active***\n\n")
 knots <- c(2.5,5,7.5)
-all_1stage_EM_YiS <- clogit(case ~ Gender + years_in_scopus_ptile:factor(Gender,levels=c("female","male")) + 
+icc_df$gender <- as.numeric(icc_df$Gender == "female")
+icc_df$gender_years_in_scopus_ptile <- icc_df$gender*icc_df$years_in_scopus_ptile
+all_1stage_EM_YiS <- clogit(case ~ gender + gender_years_in_scopus_ptile + 
                               ns(years_in_scopus_ptile,knots=knots) + 
                               ns(h_index_ptile,knots=knots) + ns(n_pubs_ptile,knots=knots) + 
                               strata(pub_id), data = icc_df)
 summary(all_1stage_EM_YiS)
 
-all_1stage_EM_HI <- clogit(case ~ Gender + h_index_ptile:factor(Gender,levels=c("female","male")) + 
+# set up data for prediction
+n.points <- 1000
+ptile <- seq(0,10,length.out = n.points)
+ptile_ns <- ns(ptile,knots=knots)
+dat_pred_f <- cbind(ptile,ptile_ns[1:nrow(ptile_ns),1:ncol(ptile_ns)])
+# Get effects of years active for women
+varnames_f <- c("gender_years_in_scopus_ptile",
+                "ns(years_in_scopus_ptile, knots = knots)")
+pred_f <- spline_predictions(all_1stage_EM_YiS,dat_pred_f,varnames_f)
+# Get effect of years active for men
+dat_pred_m <- cbind(ptile_ns[1:nrow(ptile_ns),1:ncol(ptile_ns)])
+varnames_m <- c("ns(years_in_scopus_ptile, knots = knots)")
+pred_m <- spline_predictions(all_1stage_EM_YiS,dat_pred_m,varnames_m)
+# Get effect of h-index
+varnames <- "ns(h_index_ptile, knots = knots)"
+pred_h_index <- spline_predictions(all_1stage_EM_YiS,dat_pred,varnames)
+# Get effect of number of pubs
+varnames <- "ns(n_pubs_ptile, knots = knots)"
+pred_n_pubs <- spline_predictions(all_1stage_EM_YiS,dat_pred,varnames)
+# put in data frame
+plot_effects <- cbind(pred_f,pred_m,pred_h_index,pred_n_pubs)
+names(plot_effects) <- c("pred_f","ci.lb_f","ci.ub_f",
+                         "pred_m","ci.lb_m","ci.ub_m",
+                         "pred_h_index","ci.lb_h_index","ci.ub_h_index",
+                         "pred_n_pubs","ci.lb_n_pubs","ci.ub_n_pubs")
+plot_effects$ptile <- ptile*10
+
+cols4 <- brewer.pal(4,name="Set1")
+m <- list(
+  l = 100,
+  r = 50,
+  b = 100,
+  t = 100,
+  pad = 4
+)
+OR_plot_int <- plot_ly(plot_effects, x = ~ptile, y= ~pred_f, height=700,width=600) %>%
+  # add horizontal line for null value
+  add_trace(x = c(0,100), y= c(1,1), mode = "lines", color=I("black"),
+            showlegend=F) %>%
+  add_lines(y=plot_effects$pred_f, x=plot_effects$ptile,
+            hoverinfo="none",
+            color=I(cols4[1]),
+            showlegend=F) %>%
+  add_ribbons(x=plot_effects$ptile,y=plot_effects$pred_f,
+              ymin=plot_effects$ci.lb_f, ymax=plot_effects$ci.ub_f,
+              hoverinfo="none",
+              color=I(cols4[1]),
+              name="Female") %>%
+  add_lines(y=plot_effects$pred_m, x=plot_effects$ptile,
+            hoverinfo="none",
+            color=I(cols4[2]),
+            showlegend=F) %>%
+  add_ribbons(x=plot_effects$ptile,y=plot_effects$pred_m,
+              ymin=plot_effects$ci.lb_m, ymax=plot_effects$ci.ub_m,
+              hoverinfo="none",
+              color=I(cols4[2]),
+              name="Male") %>%
+  add_trace(x = 35, y = 3.5, mode="text",text="More invited commentaries",
+            hoverinfo="none",textfont=list(size=20,color=1),
+            showlegend=F) %>%
+  add_trace(x = 35, y = 1/3.5, mode="text",text="Fewer invited commentaries",
+            hoverinfo="none",textfont=list(size=20,color=1),
+            showlegend=F) %>%
+  # layout
+  layout(yaxis = list(title="Odds ratio relative to 0th percentile (log scale)",range=c(-log(2.2),log(2.2)),type="log",
+                      tickvals=c(1/4,1/2,1,2,4),
+                      ticktext=c("1/4","1/2",
+                                 as.character(c(1,2,4)))),
+         xaxis = list(title="Percentile of Years Active",range=c(0,100),tickmode="array"),
+         showlegend=T,
+         legend = list(x = 0.3, y = -0.3),
+         margin=m,
+         font=list(size=16)
+  )
+
+export(OR_plot_int, "./results/OR_years_active_int1.pdf")
+
+# Plot
+OR_plot <- plot_ly(plot_effects, x = ~ptile, y= ~pred1, height=700,width=600) %>%
+  # add horizontal line for null value
+  add_trace(x = c(0,100), y= c(1,1), mode = "lines", color=I("black"),
+            showlegend=F) %>%
+  add_lines(y=plot_effects$pred_h_index, x=plot_effects$ptile,
+            hoverinfo="none",
+            color=I(cols3[2]),
+            showlegend=F) %>%
+  add_ribbons(x=plot_effects$ptile,y=plot_effects$pred_h_index,
+              ymin=plot_effects$ci.lb_h_index, ymax=plot_effects$ci.ub_h_index,
+              hoverinfo="none",
+              color=I(cols3[2]),
+              name="H-index") %>%
+  add_lines(y=plot_effects$pred_n_pubs, x=plot_effects$ptile,
+            hoverinfo="none",
+            color=I(cols3[3]),
+            showlegend=F) %>%
+  add_ribbons(x=plot_effects$ptile,y=plot_effects$pred_n_pubs,
+              ymin=plot_effects$ci.lb_n_pubs, ymax=plot_effects$ci.ub_n_pubs,
+              hoverinfo="none",
+              color=I(cols3[3]),
+              name="Number of publications") %>%
+  add_trace(x = 35, y = 3.5, mode="text",text="More invited commentaries",
+            hoverinfo="none",textfont=list(size=20,color=1),
+            showlegend=F) %>%
+  add_trace(x = 35, y = 1/3.5, mode="text",text="Fewer invited commentaries",
+            hoverinfo="none",textfont=list(size=20,color=1),
+            showlegend=F) %>%
+  # layout
+  layout(yaxis = list(title="Odds ratio relative to 0th percentile (log scale)",range=c(-log(2.2),log(2.2)),type="log",
+                      tickvals=c(1/4,1/2,1,2,4),
+                      ticktext=c("1/4","1/2",
+                                 as.character(c(1,2,4)))),
+         xaxis = list(title="Percentile",range=c(0,100),tickmode="array"),
+         showlegend=T,
+         legend = list(x = 0.3, y = -0.3),
+         margin=m,
+         font=list(size=16)
+  )
+
+export(OR_plot, "./results/OR_years_active_int2.pdf")
+
+
+# -------------------- H-index --------------------- #
+icc_df$gender_h_index_ptile <- icc_df$gender*icc_df$h_index_ptile
+all_1stage_EM_HI <- clogit(case ~ gender + gender_h_index_ptile + 
                              ns(years_in_scopus_ptile,knots=knots) + 
                              ns(h_index_ptile,knots=knots) + ns(n_pubs_ptile,knots=knots) +
                              strata(pub_id), data = icc_df)
 
-cat("\n\n***Effect modification by H Index***\n\n")
+cat("\n\n***Effect modification by-H Index***\n\n")
 summary(all_1stage_EM_HI)
 
-all_1stage_EM_npubs <- clogit(case ~ Gender + n_pubs_ptile:factor(Gender,levels=c("female","male")) + 
+# Get effects of h-index for women
+varnames_f <- c("gender_h_index_ptile",
+                "ns(h_index_ptile, knots = knots)")
+pred_f <- spline_predictions(all_1stage_EM_HI,dat_pred_f,varnames_f)
+# Get effect of h-index for men
+varnames_m <- c("ns(h_index_ptile, knots = knots)")
+pred_m <- spline_predictions(all_1stage_EM_HI,dat_pred_m,varnames_m)
+# Get effect of years in scopus
+varnames <- "ns(years_in_scopus_ptile, knots = knots)"
+pred_years_in_scopus <- spline_predictions(all_1stage_EM_HI,dat_pred,varnames)
+# Get effect of number of pubs
+varnames <- "ns(n_pubs_ptile, knots = knots)"
+pred_n_pubs <- spline_predictions(all_1stage_EM_HI,dat_pred,varnames)
+# put in data frame
+plot_effects <- cbind(pred_f,pred_m,pred_years_in_scopus,pred_n_pubs)
+names(plot_effects) <- c("pred_f","ci.lb_f","ci.ub_f",
+                         "pred_m","ci.lb_m","ci.ub_m",
+                         "pred_years_in_scopus","ci.lb_years_in_scopus","ci.ub_years_in_scopus",
+                         "pred_n_pubs","ci.lb_n_pubs","ci.ub_n_pubs")
+plot_effects$ptile <- ptile*10
+
+OR_plot_int <- plot_ly(plot_effects, x = ~ptile, y= ~pred_f, height=700,width=600) %>%
+  # add horizontal line for null value
+  add_trace(x = c(0,100), y= c(1,1), mode = "lines", color=I("black"),
+            showlegend=F) %>%
+  add_lines(y=plot_effects$pred_f, x=plot_effects$ptile,
+            hoverinfo="none",
+            color=I(cols4[1]),
+            showlegend=F) %>%
+  add_ribbons(x=plot_effects$ptile,y=plot_effects$pred_f,
+              ymin=plot_effects$ci.lb_f, ymax=plot_effects$ci.ub_f,
+              hoverinfo="none",
+              color=I(cols4[1]),
+              name="Female") %>%
+  add_lines(y=plot_effects$pred_m, x=plot_effects$ptile,
+            hoverinfo="none",
+            color=I(cols4[2]),
+            showlegend=F) %>%
+  add_ribbons(x=plot_effects$ptile,y=plot_effects$pred_m,
+              ymin=plot_effects$ci.lb_m, ymax=plot_effects$ci.ub_m,
+              hoverinfo="none",
+              color=I(cols4[2]),
+              name="Male") %>%
+  add_trace(x = 35, y = 3.5, mode="text",text="More invited commentaries",
+            hoverinfo="none",textfont=list(size=20,color=1),
+            showlegend=F) %>%
+  add_trace(x = 35, y = 1/3.5, mode="text",text="Fewer invited commentaries",
+            hoverinfo="none",textfont=list(size=20,color=1),
+            showlegend=F) %>%
+  # layout
+  layout(yaxis = list(title="Odds ratio relative to 0th percentile (log scale)",range=c(-log(2.2),log(2.2)),type="log",
+                      tickvals=c(1/4,1/2,1,2,4),
+                      ticktext=c("1/4","1/2",
+                                 as.character(c(1,2,4)))),
+         xaxis = list(title="Percentile of H-Index",range=c(0,100),tickmode="array"),
+         showlegend=T,
+         legend = list(x = 0.3, y = -0.3),
+         margin=m,
+         font=list(size=16)
+  )
+
+export(OR_plot_int, "./results/OR_h_index_int1.pdf")
+
+# Plot
+OR_plot <- plot_ly(plot_effects, x = ~ptile, y= ~pred_years_in_scopus, height=700,width=600) %>%
+  # add horizontal line for null value
+  add_trace(x = c(0,100), y= c(1,1), mode = "lines", color=I("black"),
+            showlegend=F) %>%
+  add_lines(y=plot_effects$pred_h_index, x=plot_effects$ptile,
+            hoverinfo="none",
+            color=I(cols3[1]),
+            showlegend=F) %>%
+  add_ribbons(x=plot_effects$ptile,y=plot_effects$pred_years_in_scopus,
+              ymin=plot_effects$ci.lb_years_in_scopus, ymax=plot_effects$ci.ub_years_in_scopus,
+              hoverinfo="none",
+              color=I(cols3[1]),
+              name="Years active") %>%
+  add_lines(y=plot_effects$pred_n_pubs, x=plot_effects$ptile,
+            hoverinfo="none",
+            color=I(cols3[3]),
+            showlegend=F) %>%
+  add_ribbons(x=plot_effects$ptile,y=plot_effects$pred_n_pubs,
+              ymin=plot_effects$ci.lb_n_pubs, ymax=plot_effects$ci.ub_n_pubs,
+              hoverinfo="none",
+              color=I(cols3[3]),
+              name="Number of publications") %>%
+  add_trace(x = 35, y = 3.5, mode="text",text="More invited commentaries",
+            hoverinfo="none",textfont=list(size=20,color=1),
+            showlegend=F) %>%
+  add_trace(x = 35, y = 1/3.5, mode="text",text="Fewer invited commentaries",
+            hoverinfo="none",textfont=list(size=20,color=1),
+            showlegend=F) %>%
+  # layout
+  layout(yaxis = list(title="Odds ratio relative to 0th percentile (log scale)",range=c(-log(2.2),log(2.2)),type="log",
+                      tickvals=c(1/4,1/2,1,2,4),
+                      ticktext=c("1/4","1/2",
+                                 as.character(c(1,2,4)))),
+         xaxis = list(title="Percentile",range=c(0,100),tickmode="array"),
+         showlegend=T,
+         legend = list(x = 0.3, y = -0.3),
+         margin=m,
+         font=list(size=16)
+  )
+
+export(OR_plot, "./results/OR_h_index_int2.pdf")
+
+# -------------------- Number of pubs --------------------- #
+icc_df$gender_n_pubs_ptile <- icc_df$gender*icc_df$n_pubs_ptile
+all_1stage_EM_npubs <- clogit(case ~ gender + gender_n_pubs_ptile + 
                                 ns(years_in_scopus_ptile,knots=knots) + 
                                 ns(h_index_ptile,knots=knots) + ns(n_pubs_ptile,knots=knots) +
                                 strata(pub_id), data = icc_df)
@@ -71,7 +388,113 @@ all_1stage_EM_npubs <- clogit(case ~ Gender + n_pubs_ptile:factor(Gender,levels=
 cat("\n\n***Effect modification by number of publications***\n\n")
 summary(all_1stage_EM_npubs)
 
-# Plot main results
+# Get effects of number of pubs for women
+varnames_f <- c("gender_n_pubs_ptile",
+                "ns(n_pubs_ptile, knots = knots)")
+pred_f <- spline_predictions(all_1stage_EM_npubs,dat_pred_f,varnames_f)
+# Get effect of number of pubs for men
+varnames_m <- c("ns(n_pubs_ptile, knots = knots)")
+pred_m <- spline_predictions(all_1stage_EM_npubs,dat_pred_m,varnames_m)
+# Get effect of years in scopus
+varnames <- "ns(years_in_scopus_ptile, knots = knots)"
+pred_years_in_scopus <- spline_predictions(all_1stage_EM_npubs,dat_pred,varnames)
+# Get effect of h-index
+varnames <- "ns(h_index_ptile, knots = knots)"
+pred_h_index <- spline_predictions(all_1stage_EM_npubs,dat_pred,varnames)
+# put in data frame
+plot_effects <- cbind(pred_f,pred_m,pred_years_in_scopus,pred_h_index)
+names(plot_effects) <- c("pred_f","ci.lb_f","ci.ub_f",
+                         "pred_m","ci.lb_m","ci.ub_m",
+                         "pred_years_in_scopus","ci.lb_years_in_scopus","ci.ub_years_in_scopus",
+                         "pred_h_index","ci.lb_h_index","ci.ub_h_index")
+plot_effects$ptile <- ptile*10
+
+OR_plot_int <- plot_ly(plot_effects, x = ~ptile, y= ~pred_f, height=700,width=600) %>%
+  # add horizontal line for null value
+  add_trace(x = c(0,100), y= c(1,1), mode = "lines", color=I("black"),
+            showlegend=F) %>%
+  add_lines(y=plot_effects$pred_f, x=plot_effects$ptile,
+            hoverinfo="none",
+            color=I(cols4[1]),
+            showlegend=F) %>%
+  add_ribbons(x=plot_effects$ptile,y=plot_effects$pred_f,
+              ymin=plot_effects$ci.lb_f, ymax=plot_effects$ci.ub_f,
+              hoverinfo="none",
+              color=I(cols4[1]),
+              name="Female") %>%
+  add_lines(y=plot_effects$pred_m, x=plot_effects$ptile,
+            hoverinfo="none",
+            color=I(cols4[2]),
+            showlegend=F) %>%
+  add_ribbons(x=plot_effects$ptile,y=plot_effects$pred_m,
+              ymin=plot_effects$ci.lb_m, ymax=plot_effects$ci.ub_m,
+              hoverinfo="none",
+              color=I(cols4[2]),
+              name="Male") %>%
+  add_trace(x = 35, y = 3.5, mode="text",text="More invited commentaries",
+            hoverinfo="none",textfont=list(size=20,color=1),
+            showlegend=F) %>%
+  add_trace(x = 35, y = 1/3.5, mode="text",text="Fewer invited commentaries",
+            hoverinfo="none",textfont=list(size=20,color=1),
+            showlegend=F) %>%
+  # layout
+  layout(yaxis = list(title="Odds ratio relative to 0th percentile (log scale)",range=c(-log(2.2),log(2.2)),type="log",
+                      tickvals=c(1/4,1/2,1,2,4),
+                      ticktext=c("1/4","1/2",
+                                 as.character(c(1,2,4)))),
+         xaxis = list(title="Percentile of number of publications",range=c(0,100),tickmode="array"),
+         showlegend=T,
+         legend = list(x = 0.3, y = -0.3),
+         margin=m,
+         font=list(size=16)
+  )
+
+export(OR_plot_int, "./results/OR_n_pubs_int1.pdf")
+
+# Plot
+OR_plot <- plot_ly(plot_effects, x = ~ptile, y= ~pred_years_in_scopus, height=700,width=600) %>%
+  # add horizontal line for null value
+  add_trace(x = c(0,100), y= c(1,1), mode = "lines", color=I("black"),
+            showlegend=F) %>%
+  add_lines(y=plot_effects$pred_n_pubs, x=plot_effects$ptile,
+            hoverinfo="none",
+            color=I(cols3[1]),
+            showlegend=F) %>%
+  add_ribbons(x=plot_effects$ptile,y=plot_effects$pred_years_in_scopus,
+              ymin=plot_effects$ci.lb_years_in_scopus, ymax=plot_effects$ci.ub_years_in_scopus,
+              hoverinfo="none",
+              color=I(cols3[1]),
+              name="Years active") %>%
+  add_lines(y=plot_effects$pred_h_index, x=plot_effects$ptile,
+            hoverinfo="none",
+            color=I(cols3[2]),
+            showlegend=F) %>%
+  add_ribbons(x=plot_effects$ptile,y=plot_effects$pred_h_index,
+              ymin=plot_effects$ci.lb_h_index, ymax=plot_effects$ci.ub_h_index,
+              hoverinfo="none",
+              color=I(cols3[2]),
+              name="H-index") %>%
+  add_trace(x = 35, y = 3, mode="text",text="More invited commentaries",
+            hoverinfo="none",textfont=list(size=20,color=1),
+            showlegend=F) %>%
+  add_trace(x = 35, y = 1/3, mode="text",text="Fewer invited commentaries",
+            hoverinfo="none",textfont=list(size=20,color=1),
+            showlegend=F) %>%
+  # layout
+  layout(yaxis = list(title="Odds ratio relative to 0th percentile (log scale)",range=c(-log(2.1),log(2.1)),type="log",
+                      tickvals=c(1/4,1/2,1,2,4),
+                      ticktext=c("1/4","1/2",
+                                 as.character(c(1,2,4)))),
+         xaxis = list(title="Percentile",range=c(0,100),tickmode="array"),
+         showlegend=T,
+         legend = list(x = 0.3, y = -0.3),
+         margin=m,
+         font=list(size=16)
+  )
+
+export(OR_plot, "./results/OR_n_pubs_int2.pdf")
+
+# -------------------- Plot gender effect by years active --------------------- #
 deciles <- c(1,3,5,7,9)
 
 OR_df <- data.frame(ptile_YiS=c("10th","30th","50th","70th","90th"),
@@ -141,6 +564,12 @@ outputs_df <- data.frame(journal=journals$pub_sourceid,
                          effect_adj=numeric(length=nrow(journals))+NA,
                          sd_adj=numeric(length=nrow(journals))+NA,
                          pval_adj=numeric(length=nrow(journals))+NA,
+                         effect_int=numeric(length=nrow(journals))+NA,
+                         sd_int=numeric(length=nrow(journals))+NA,
+                         pval_int=numeric(length=nrow(journals))+NA,
+                         effect_int2=numeric(length=nrow(journals))+NA,
+                         sd_int2=numeric(length=nrow(journals))+NA,
+                         pval_int2=numeric(length=nrow(journals))+NA,
                          citescore=journals$citescore,
                          included=journals$include.journal)
 
@@ -159,8 +588,11 @@ for(i in 1:nrow(journals)){
     outputs_df$n_cases[i] <- sum(icc_df$pub_sourceid == outputs_df$journal[i])
   }
   # Adjusted model
-  mod_adj <- tryCatch(clogit(case ~ Gender + ns(years_in_scopus_ptile,knots=knots) + 
-                               ns(h_index_ptile,knots=knots) + ns(n_pubs_ptile,knots=knots) + strata(pub_id), 
+  mod_adj <- tryCatch(clogit(case ~ Gender + 
+                               ns(years_in_scopus_ptile,knots=knots) + 
+                               ns(h_index_ptile,knots=knots) + 
+                               ns(n_pubs_ptile,knots=knots) + 
+                               strata(pub_id), 
                              icc_df, 
                              subset= pub_sourceid == outputs_df$journal[i]),
                       error=function(err) NA) # If the model won't run, return NA
@@ -169,6 +601,23 @@ for(i in 1:nrow(journals)){
     outputs_df$sd_adj[i] <- sqrt(mod_adj$var[1])
     outputs_df$pval_adj[i] <- summary(mod_adj)$coefficients[1,5]
     outputs_df$n_cases_adj[i] <- summary(mod_adj)$nevent
+  }
+  # Adjusted model with interaction
+  mod_int <- tryCatch(clogit(case ~ gender + gender_years_in_scopus_ptile + 
+                               ns(years_in_scopus_ptile,knots=knots) +
+                               ns(h_index_ptile,knots=knots) + 
+                               ns(n_pubs_ptile,knots=knots) + 
+                               strata(pub_id), 
+                             icc_df, 
+                             subset= pub_sourceid == outputs_df$journal[i]),
+                      error=function(err) NA) # If the model won't run, return NA
+  if(!is.na(mod_int)){
+    outputs_df$effect_int[i] <- mod_int$coefficients[1]
+    outputs_df$sd_int[i] <- sqrt(mod_int$var[1,1])
+    outputs_df$pval_int[i] <- summary(mod_int)$coefficients[1,5]
+    outputs_df$effect_int2[i] <- mod_int$coefficients[2]
+    outputs_df$sd_int2[i] <- sqrt(mod_int$var[2,2])
+    outputs_df$pval_int2[i] <- summary(mod_int)$coefficients[2,5]
   }
   if((i %% 100)==0) print(i)
 }

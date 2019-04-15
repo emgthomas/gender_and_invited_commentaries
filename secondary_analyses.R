@@ -59,11 +59,8 @@ summary(all_1stage_cs)
 # set up data for prediction
 n.points <- 1000
 citescore_new <- seq(min(icc_df_cs$citescore),max(icc_df_cs$citescore),length.out = n.points)
-citescore_bs <- ns(citescore_new,knots=knot_placement)
-dat_pred <- as.matrix(data.frame(gender=1,
-                      citescore_gender_1=citescore_bs[,1],citescore_gender_2=citescore_bs[,2],
-                      citescore_gender_3=citescore_bs[,3],citescore_gender_4=citescore_bs[,4]
-                      ))
+citescore_ns <- ns(citescore_new,knots=knot_placement)
+dat_pred <- cbind(gender=1,citescore_ns)
 # Get predicted values
 varnames <- c("gender","citescore_gender_1","citescore_gender_2",
               "citescore_gender_3","citescore_gender_4")
@@ -201,6 +198,9 @@ OR_adj_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~O
 export(OR_adj_plot, "./results/OR_adj_citescore.pdf")
 
 cat("\n\n------------ Sub-group analyses by journal topic ----------------\n\n")
+cat("Note: here we perform sub-group analyses by topic using both one- and two-stage
+meta-analysis. The two-stage approach is treated as a sensitivity analysis, but
+we include it here for ease of coding.\n")
 
 # Total number of cases by topic (among journals included in 2-stage meta-analysis)
 topic_case_counts <- sapply(topics_list,function(topic,df) sum(df$n_cases[df[,names(df) == topic]==1],na.rm=T),
