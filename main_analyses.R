@@ -140,63 +140,78 @@ all_1stage_EM_YiS <- clogit(case ~ gender + gender_years_in_scopus_ptile +
 summary(all_1stage_EM_YiS)
 
 # --- Plot gender effect by years active -- #
-deciles <- c(1,3,5,7,9)
-
-OR_df <- data.frame(ptile_YiS=c("10th","30th","50th","70th","90th"),
-                    OR=numeric(length=5),ci.lb=numeric(length=5),ci.ub=numeric(length=5))
-
-OR_df$OR <- exp(all_1stage_EM_YiS$coefficients[1] + deciles*all_1stage_EM_YiS$coefficients[2])
-
-logOR_se <- sqrt(all_1stage_EM_YiS$var[1,1] + deciles^2*all_1stage_EM_YiS$var[2,2] + 2*deciles*all_1stage_EM_YiS$var[1,2])
-
+decile <- seq(0,10,0.1)
+OR_df <- data.frame(decile=decile)
+OR_df$ptile <- OR_df$decile*10
+OR_df$OR <- exp(all_1stage_EM_YiS$coefficients[1] + decile*all_1stage_EM_YiS$coefficients[2])
+logOR_se <- sqrt(all_1stage_EM_YiS$var[1,1] + decile^2*all_1stage_EM_YiS$var[2,2] + 2*decile*all_1stage_EM_YiS$var[1,2])
 OR_df$ci.lb <- OR_df$OR*exp(-1.96*logOR_se)
 OR_df$ci.ub <- OR_df$OR*exp(1.96*logOR_se)
 
-tablehead <- rbind(c("Years Active","Percentile of \nYears Active","OR (95%CI)"),
-                   rep(NA,3))
-
 # Get number of years active corresponding approximately to each decile
 dec1 <- unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>0.9 & icc_df$years_in_scopus_ptile<1.1 & !is.na(icc_df$years_in_scopus_ptile)])
-dec3 <- unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>2.8 & icc_df$years_in_scopus_ptile<3.2 & !is.na(icc_df$years_in_scopus_ptile)])
+# dec3 <- unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>2.8 & icc_df$years_in_scopus_ptile<3.2 & !is.na(icc_df$years_in_scopus_ptile)])
 dec5 <- unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>3.8 & icc_df$years_in_scopus_ptile<4.2 & !is.na(icc_df$years_in_scopus_ptile)])
-dec7 <-  unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>6.9 & icc_df$years_in_scopus_ptile<7.1 & !is.na(icc_df$years_in_scopus_ptile)])
+# dec7 <-  unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>6.9 & icc_df$years_in_scopus_ptile<7.1 & !is.na(icc_df$years_in_scopus_ptile)])
 dec9 <- unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>8.94 & icc_df$years_in_scopus_ptile<9.06 & !is.na(icc_df$years_in_scopus_ptile)])
-years <- c(dec1,dec3,dec5,dec7,dec9)
-tablenum <- cbind(years,
-                  as.character(OR_df$ptile_YiS),
-                  sapply(1:nrow(OR_df),formatting_fun,or=OR_df$OR,ci.lb=OR_df$ci.lb,ci.ub=OR_df$ci.ub)
-)
-
-tabletext <- rbind(tablehead,tablenum)
-
-means <- c(NA,NA,OR_df$OR)
-lowers <- c(NA,NA,OR_df$ci.lb)
-uppers <- c(NA,NA,OR_df$ci.ub)
+years_YiS <- c(dec1,dec5,dec9)
+axis_labels <- data.frame(ptile_label=c("10th (8 years)","50th (16 years)","90th (38 years)"))
+axis_labels$decile <- c(1,5,9)
+axis_labels$ptile <- axis_labels$decile*10
+axis_labels$OR <- exp(all_1stage_EM_YiS$coefficients[1] + axis_labels$decile*all_1stage_EM_YiS$coefficients[2])
+axis_labels$OR_label <- format(axis_labels$OR,digits=2)
+axis_labels$years_YiS <- years_YiS
 
 # make plot/table
-my_ticks <- c(2/3,1,3/2)
-attr(my_ticks,"labels") <- c("2/3","1","3/2")
-pdf(file="./results/ORs_int_years_active.pdf",width=7,height=3)
-forestplot(tabletext,mean=means,lower=lowers,upper=uppers,
-           #align=c("l",rep("r",ncol(tabletext)-1)),
-           align=rep("c",3),
-           zero=1,
-           is.summary=c(TRUE,TRUE,rep(FALSE,nrow(tabletext)-2)),
-           col=fpColors(box=c(cols3[1])),
-           xlab="      Favors Men    Favors Women",
-           graphwidth=unit(100,units="points"),
-           lineheight=unit(22,units="points"),
-           colgap=unit(6,"mm"),
-           line.margin=0.2,
-           txt_gp = fpTxtGp(ticks = gpar(fontfamily = "", cex=0.9),
-                            xlab  = gpar(cex = 1.2)),
-           xlog=TRUE,xticks=my_ticks,xticks.digits=5,
-           grid=T,
-           boxsize=0.3,
-           fn.ci_norm = fpDrawDiamondCI,
-           new_page=F
+m <- list(
+  l = 80,
+  r = 20,
+  b = 20,
+  t = 20,
+  pad = 5
 )
-dev.off()
+OR_plot_YiS <- plot_ly(OR_df, x = ~ptile, y= ~OR, type="scatter", mode="lines",
+                       width=600,height=500, name="Odds Ratio",
+                       color=I(cols3[1])) %>%
+  # # add horizontal line for null value
+  # add_lines(x = c(0,100), y= c(1,1), color=I("black"),
+  #           showlegend=F, line=list(linewidth=1)) %>%
+  # ribbon fo 95%CI
+  add_ribbons(x=OR_df$ptile,y=OR_df$OR,
+              ymin=OR_df$ci.lb, ymax=OR_df$ci.ub,
+              hoverinfo="none",
+              color=I(cols3[1]),
+              name="95%CI") %>%
+  # add_trace(x = 25, y = 1.5, mode="text",text="Favors women",
+  #           hoverinfo="none",textfont=list(size=20,color=1),
+  #           showlegend=F) %>%
+  add_trace(x = 28, y = 0.69, mode="text",text="Increasing odds\n favoring men",
+            hoverinfo="none",textfont=list(size=20,color=1),
+            showlegend=F) %>%
+  # layout
+  layout(yaxis = list(title="Odds Ratio (log scale)",
+                      # range=c(-log(0.5),log(1.5)),
+                      type="log",
+                      tickvals=c(axis_labels$OR,1),
+                      ticktext=c(axis_labels$OR_label,"1"),
+                      showline = TRUE,
+                      linewidth=1,
+                      showgrid=FALSE,
+                      ticks="outside"),
+         xaxis = list(title="Percentile of Years Active",range=c(0,100),
+                      tickvals=axis_labels$ptile,
+                      ticktext=axis_labels$ptile_label,
+                      showline = TRUE,
+                      linewidth=1,
+                      showgrid=FALSE,
+                      ticks="outside"),
+         showlegend=T,
+         legend = list(x = 0.3, y = -0.4),
+         margin=m,
+         font=list(size=16)
+  )
+
+export(OR_plot_YiS, "./results/gender_OR_by_years_active.pdf")
 
 # --- Plot effect of continuous variables --- #
 # set up data for prediction
