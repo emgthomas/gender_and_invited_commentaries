@@ -19,10 +19,9 @@ cat("--------------------------------------------------\n\n")
 cat("--------------------- Table 1 --------------------\n\n")
 cat("--------------------------------------------------\n\n")
 
+cat("-----------------Author-level variables for *unique* authors included in analysis----------------\n\n")
 
-cat("-----------------Number of unique case and control authors of each gender----------------\n\n")
-
-unique_authors <- icc_df_all[,c("auth_id","Gender","case",
+unique_authors <- icc_df[,c("auth_id","Gender","case",
                                 "years_in_scopus","Total_Publications_In_Scopus",
                                 "H_Index")]
 unique_authors <- unique_authors[!duplicated(unique_authors),]
@@ -40,47 +39,95 @@ unique_authors2$status[unique_authors2$auth_id %in% cases] <- "Case"
 unique_authors2$status[unique_authors2$auth_id %in% both] <- "Both"
 unique_authors2$status <- factor(unique_authors2$status,levels=c("Case","Control","Both"))
 
-cat("Missing gender variable by case/control status:\n")
-CrossTable(unique_authors2$Gender,unique_authors2$status)
+cat("\n\n----Gender----\n\n")
+CrossTable(unique_authors2$Gender,unique_authors2$status,
+           prop.r=F,prop.c=T,prop.t=F,prop.chisq=F)
 
-cat("-----------------Seniority metrics for unique authors by case status----------------\n\n")
-
-cat("\n\n----Years since first publication----\n\n")
-tapply(unique_authors2$years_in_scopus,unique_authors2$status,summary)
-cat("All:\n\n")
-summary(unique_authors2$years_in_scopus)
+cat("\n\n----Quartiles of years since first publication----\n\n")
+tapply(unique_authors2$years_in_scopus,unique_authors2$status,quantile,probs=c(0.25,0.5,0.75),na.rm=T)
+cat("\nAll:\n\n")
+quantile(unique_authors2$years_in_scopus,probs=c(0.25,0.5,0.75),na.rm=T)
 
 cat("\n\n----Number of publications----\n\n")
-tapply(unique_authors2$Total_Publications_In_Scopus,unique_authors2$status,summary)
-cat("All:\n\n")
-summary(unique_authors2$Total_Publications_In_Scopus)
+tapply(unique_authors2$Total_Publications_In_Scopus,unique_authors2$status,quantile,probs=c(0.25,0.5,0.75),na.rm=T)
+cat("\nAll:\n\n")
+quantile(unique_authors2$Total_Publications_In_Scopus,probs=c(0.25,0.5,0.75),na.rm=T)
 
 cat("\n\n----H-Index----\n\n")
-tapply(unique_authors2$H_Index,unique_authors2$status,summary)
-cat("All:\n\n")
-summary(unique_authors2$H_Index)
+tapply(unique_authors2$H_Index,unique_authors2$status,quantile,probs=c(0.25,0.5,0.75),na.rm=T)
+cat("\nAll:\n\n")
+quantile(unique_authors2$H_Index,probs=c(0.25,0.5,0.75),na.rm=T)
 
 cat("------------------------------------------------------\n\n")
 cat("--------------------- Other stats --------------------\n\n")
 cat("------------------------------------------------------\n\n")
 
-cat("\n\n-----------------Gender distribution of cases and controls----------------\n\n")
-cases <- icc_df[icc_df$case==1,c("Gender","auth_id")]
+cat("\n\n-----------------Gender distribution of ICC authors----------------\n\n")
+authors <- readRDS(file="./data/authors_raw.rds")
+publications <- readRDS(file="./data/publications_raw.rds")
+cases <- authors[authors$case==1,]
+publications <- merge(publications,cases,by="pub_id",all.x=T,all.y=F)
+CrossTable(publications$Gender)
+
+cat("\n\n---Excluding unknown gender---\n\n")
+publications <- publications[publications$Gender != "unknown",]
+CrossTable(publications$Gender)
+
+cat("\n\n-----------------Gender distribution of unique case authors, excluding unknown gender----------------\n\n")
+icc_df <- readRDS("./data/processed_data_no_missing.rds")
+cases <- icc_df[icc_df$case==1,]
 cases <- cases[!duplicated(cases$auth_id),]
-cat("\n\n---Cases---\n\n")
 CrossTable(cases$Gender)
 
-controls <- icc_df[icc_df$case==0,c("Gender","auth_id")]
-controls <- controls[!duplicated(controls$auth_id),]
-cat("\n\n---Controls---\n\n")
-CrossTable(controls$Gender)
+cat("\n\n-----------------Gender of controls by gender of case, excluding unknown gender----------------\n\n")
+female_case_pubs <- icc_df[icc_df$case==1 & icc_df$Gender=="female",]$pub_id
+female_cases_controls <- icc_df[icc_df$case==0 & icc_df$pub_id %in% female_case_pubs,]
+female_cases_av_controls <- tapply(female_cases_controls$Gender=="female",
+                                 factor(female_cases_controls$pub_id),
+                                 mean)
+cat("\n\n---Number of matched sets with female cases---\n\n")
+length(female_cases_av_controls)
+cat("\n\n---Average number of female controls for female cases---\n\n")
+mean(female_cases_av_controls)
 
-cat("\n\n-----------------Gender of controls by gender of case----------------\n\n")
-
+male_case_pubs <- icc_df[icc_df$case==1 & icc_df$Gender=="male",]$pub_id
+male_cases_controls <- icc_df[icc_df$case==0 & icc_df$pub_id %in% male_case_pubs,]
+male_cases_av_controls <- tapply(male_cases_controls$Gender=="female",
+                                 factor(male_cases_controls$pub_id),
+                                        mean)
+cat("\n\n---Number of matched sets with male cases---\n\n")
+length(male_cases_av_controls)
+cat("\n\n---Average number of female controls for male cases---\n\n")
+mean(male_cases_av_controls)
 
 cat("\n\n-----------------Number of controls per case included in analysis----------------\n\n")
 n_controls <- tapply(1-icc_df$case,icc_df$pub_id,sum)
 summary(n_controls)
+
+cat("\n\n---Proportion of cases who authored ICCs in multiple journals, by gender---\n")
+cases <- icc_df[icc_df$case==1,c("Gender","auth_id")]
+cases$auth_id <- factor(cases$auth_id)
+cases$count <- 1
+cases_n_journals <- tapply(X=cases$count,INDEX=cases$auth_id,FUN=sum)
+cases_n_journals <- data.frame(auth_id=names(cases_n_journals),n_journals=cases_n_journals)
+cases_n_journals <- merge(cases_n_journals,cases[!duplicated(cases$auth_id),c("Gender","auth_id")],by="auth_id",all.X=T,all.y=F)
+tapply(cases_n_journals$n_journals>1,cases_n_journals$Gender,mean)
+cat("\n\nAll\n")
+mean(cases_n_journals$n_journals>1)
+sum(cases_n_journals$n_journals>1)
+
+cat("\n\n---Summary of number of journals, by gender---\n")
+tapply(cases_n_journals$n_journals,cases_n_journals$Gender,summary)
+cat("\n\nAll\n")
+summary(cases_n_journals$n_journals)
+
+cat("\n\n-----------------Correlation of years active, h-index and number of pubs----------------\n\n")
+cat("\n\n---Years in scopus percentile vs. h-index percentile---\n\n")
+cor(icc_df$years_in_scopus_ptile,icc_df$h_index_ptile,use="complete.obs",method="spearman")
+cat("\n\n---Years in scopus percentile vs. number of pubs percentile---\n\n")
+cor(icc_df$years_in_scopus_ptile,icc_df$n_pubs_ptile,use="complete.obs",method="spearman")
+cat("\n\n---H-index percentile vs. number of pubs percentile---\n\n")
+cor(icc_df$h_index_ptile,icc_df$n_pubs_ptile,use="complete.obs",method="spearman")
 
 #######################################################################
 sink()

@@ -11,10 +11,18 @@ require(survival)
 require(splines)
 require(forestplot)
 require(reshape2)
-require(ggplot2)
+require(plotly)
+require(RColorBrewer)
+require(lmtest)
 
 # global functions
 source("./code/functions.R")
+
+# Color palettes
+cols1 <- brewer.pal(9,name="BuGn")
+cols2 <- brewer.pal(9,name="Oranges")
+cols3 <- brewer.pal(3,name="Accent")
+cols4 <- brewer.pal(4,name="Set1")
 
 ## load data
 icc_df <- readRDS(file="./data/processed_data_no_missing.rds")
@@ -33,13 +41,6 @@ cat("\n\n---Adjusted for measures of seniority using natural cubic splines---\n"
 knots <- c(2.5,5,7.5)
 all_1stage_adj <- clogit(case ~ Gender + ns(years_in_scopus_ptile,knots=knots) + 
                            ns(h_index_ptile,knots=knots) + ns(n_pubs_ptile,knots=knots) + 
-                           strata(pub_id), data = icc_df)
-summary(all_1stage_adj)
-
-cat("\n\n---Adjusted for measures of seniority as linear terms---\n")
-
-all_1stage_adj <- clogit(case ~ Gender + years_in_scopus_ptile + 
-                           h_index_ptile + n_pubs_ptile + 
                            strata(pub_id), data = icc_df)
 summary(all_1stage_adj)
 
@@ -75,8 +76,6 @@ names(plot_effects) <- c("pred1","ci.lb1","ci.ub1",
                          "pred3","ci.lb3","ci.ub3")
 plot_effects$ptile <- ptile*10
 
-# Plot
-cols3 <- brewer.pal(3,name="Accent")
 # Plot
 OR_plot <- plot_ly(plot_effects, x = ~ptile, y= ~pred1, height=600,width=1000) %>%
   # add horizontal line for null value
@@ -140,6 +139,66 @@ all_1stage_EM_YiS <- clogit(case ~ gender + gender_years_in_scopus_ptile +
                               strata(pub_id), data = icc_df)
 summary(all_1stage_EM_YiS)
 
+# --- Plot gender effect by years active -- #
+deciles <- c(1,3,5,7,9)
+
+OR_df <- data.frame(ptile_YiS=c("10th","30th","50th","70th","90th"),
+                    OR=numeric(length=5),ci.lb=numeric(length=5),ci.ub=numeric(length=5))
+
+OR_df$OR <- exp(all_1stage_EM_YiS$coefficients[1] + deciles*all_1stage_EM_YiS$coefficients[2])
+
+logOR_se <- sqrt(all_1stage_EM_YiS$var[1,1] + deciles^2*all_1stage_EM_YiS$var[2,2] + 2*deciles*all_1stage_EM_YiS$var[1,2])
+
+OR_df$ci.lb <- OR_df$OR*exp(-1.96*logOR_se)
+OR_df$ci.ub <- OR_df$OR*exp(1.96*logOR_se)
+
+tablehead <- rbind(c("Years Active","Percentile of \nYears Active","OR (95%CI)"),
+                   rep(NA,3))
+
+# Get number of years active corresponding approximately to each decile
+dec1 <- unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>0.9 & icc_df$years_in_scopus_ptile<1.1 & !is.na(icc_df$years_in_scopus_ptile)])
+dec3 <- unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>2.8 & icc_df$years_in_scopus_ptile<3.2 & !is.na(icc_df$years_in_scopus_ptile)])
+dec5 <- unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>3.8 & icc_df$years_in_scopus_ptile<4.2 & !is.na(icc_df$years_in_scopus_ptile)])
+dec7 <-  unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>6.9 & icc_df$years_in_scopus_ptile<7.1 & !is.na(icc_df$years_in_scopus_ptile)])
+dec9 <- unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>8.94 & icc_df$years_in_scopus_ptile<9.06 & !is.na(icc_df$years_in_scopus_ptile)])
+years <- c(dec1,dec3,dec5,dec7,dec9)
+tablenum <- cbind(years,
+                  as.character(OR_df$ptile_YiS),
+                  sapply(1:nrow(OR_df),formatting_fun,or=OR_df$OR,ci.lb=OR_df$ci.lb,ci.ub=OR_df$ci.ub)
+)
+
+tabletext <- rbind(tablehead,tablenum)
+
+means <- c(NA,NA,OR_df$OR)
+lowers <- c(NA,NA,OR_df$ci.lb)
+uppers <- c(NA,NA,OR_df$ci.ub)
+
+# make plot/table
+my_ticks <- c(2/3,1,3/2)
+attr(my_ticks,"labels") <- c("2/3","1","3/2")
+pdf(file="./results/ORs_int_years_active.pdf",width=7,height=3)
+forestplot(tabletext,mean=means,lower=lowers,upper=uppers,
+           #align=c("l",rep("r",ncol(tabletext)-1)),
+           align=rep("c",3),
+           zero=1,
+           is.summary=c(TRUE,TRUE,rep(FALSE,nrow(tabletext)-2)),
+           col=fpColors(box=c(cols3[1])),
+           xlab="      Favors Men    Favors Women",
+           graphwidth=unit(100,units="points"),
+           lineheight=unit(22,units="points"),
+           colgap=unit(6,"mm"),
+           line.margin=0.2,
+           txt_gp = fpTxtGp(ticks = gpar(fontfamily = "", cex=0.9),
+                            xlab  = gpar(cex = 1.2)),
+           xlog=TRUE,xticks=my_ticks,xticks.digits=5,
+           grid=T,
+           boxsize=0.3,
+           fn.ci_norm = fpDrawDiamondCI,
+           new_page=F
+)
+dev.off()
+
+# --- Plot effect of continuous variables --- #
 # set up data for prediction
 n.points <- 1000
 ptile <- seq(0,10,length.out = n.points)
@@ -167,7 +226,6 @@ names(plot_effects) <- c("pred_f","ci.lb_f","ci.ub_f",
                          "pred_n_pubs","ci.lb_n_pubs","ci.ub_n_pubs")
 plot_effects$ptile <- ptile*10
 
-cols4 <- brewer.pal(4,name="Set1")
 m <- list(
   l = 100,
   r = 50,
@@ -175,7 +233,7 @@ m <- list(
   t = 100,
   pad = 4
 )
-OR_plot_int <- plot_ly(plot_effects, x = ~ptile, y= ~pred_f, height=700,width=600) %>%
+OR_plot_int <- plot_ly(plot_effects, x = ~ptile, y= ~pred_f, height=700,width=600, type="scatter") %>%
   # add horizontal line for null value
   add_trace(x = c(0,100), y= c(1,1), mode = "lines", color=I("black"),
             showlegend=F) %>%
@@ -218,7 +276,7 @@ OR_plot_int <- plot_ly(plot_effects, x = ~ptile, y= ~pred_f, height=700,width=60
 export(OR_plot_int, "./results/OR_years_active_int1.pdf")
 
 # Plot
-OR_plot <- plot_ly(plot_effects, x = ~ptile, y= ~pred1, height=700,width=600) %>%
+OR_plot <- plot_ly(plot_effects, x = ~ptile, y= ~pred1, height=700,width=600, type="scatter") %>%
   # add horizontal line for null value
   add_trace(x = c(0,100), y= c(1,1), mode = "lines", color=I("black"),
             showlegend=F) %>%
@@ -268,8 +326,66 @@ all_1stage_EM_HI <- clogit(case ~ gender + gender_h_index_ptile +
                              ns(h_index_ptile,knots=knots) + ns(n_pubs_ptile,knots=knots) +
                              strata(pub_id), data = icc_df)
 
-cat("\n\n***Effect modification by-H Index***\n\n")
+cat("\n\n***Effect modification by H-Index***\n\n")
 summary(all_1stage_EM_HI)
+
+# --- Plot gender effect by h-index -- #
+OR_df <- data.frame(ptile=c("10th","30th","50th","70th","90th"),
+                    OR=numeric(length=5),ci.lb=numeric(length=5),ci.ub=numeric(length=5))
+
+OR_df$OR <- exp(all_1stage_EM_HI$coefficients[1] + deciles*all_1stage_EM_HI$coefficients[2])
+logOR_se <- sqrt(all_1stage_EM_HI$var[1,1] + deciles^2*all_1stage_EM_HI$var[2,2] + 2*deciles*all_1stage_EM_HI$var[1,2])
+
+OR_df$ci.lb <- OR_df$OR*exp(-1.96*logOR_se)
+OR_df$ci.ub <- OR_df$OR*exp(1.96*logOR_se)
+
+tablehead <- rbind(c("H-Index","Percentile of \nH-Index","OR (95%CI)"),
+                   rep(NA,3))
+
+# Get number of years active corresponding approximately to each decile
+dec1 <- unique(icc_df$H_Index[icc_df$h_index_ptile>0.9 & icc_df$h_index_ptile<1.1 & !is.na(icc_df$h_index_ptile)])
+dec3 <- unique(icc_df$H_Index[icc_df$h_index_ptile>2.8 & icc_df$h_index_ptile<3.2 & !is.na(icc_df$h_index_ptile)])
+dec5 <- unique(icc_df$H_Index[icc_df$h_index_ptile>3.8 & icc_df$h_index_ptile<4.2 & !is.na(icc_df$h_index_ptile)])
+dec7 <-  unique(icc_df$H_Index[icc_df$h_index_ptile>6.9 & icc_df$h_index_ptile<7.1 & !is.na(icc_df$h_index_ptile)])
+dec9 <- unique(icc_df$H_Index[icc_df$h_index_ptile>8.98 & icc_df$h_index_ptile<9.02 & !is.na(icc_df$h_index_ptile)])
+h_indices <- c(dec1,dec3,dec5,dec7,dec9)
+tablenum <- cbind(h_indices,
+                  as.character(OR_df$ptile),
+                  sapply(1:nrow(OR_df),formatting_fun,or=OR_df$OR,ci.lb=OR_df$ci.lb,ci.ub=OR_df$ci.ub)
+)
+
+tabletext <- rbind(tablehead,tablenum)
+
+means <- c(NA,NA,OR_df$OR)
+lowers <- c(NA,NA,OR_df$ci.lb)
+uppers <- c(NA,NA,OR_df$ci.ub)
+
+# make plot/table
+my_ticks <- c(2/3,1,3/2)
+attr(my_ticks,"labels") <- c("2/3","1","3/2")
+pdf(file="./results/ORs_int_h_index.pdf",width=7,height=3)
+forestplot(tabletext,mean=means,lower=lowers,upper=uppers,
+           #align=c("l",rep("r",ncol(tabletext)-1)),
+           align=rep("c",3),
+           zero=1,
+           is.summary=c(TRUE,TRUE,rep(FALSE,nrow(tabletext)-2)),
+           col=fpColors(box=c(cols3[2])),
+           xlab="      Favors Men    Favors Women",
+           graphwidth=unit(100,units="points"),
+           lineheight=unit(22,units="points"),
+           colgap=unit(6,"mm"),
+           line.margin=0.2,
+           txt_gp = fpTxtGp(ticks = gpar(fontfamily = "", cex=0.9),
+                            xlab  = gpar(cex = 1.2)),
+           xlog=TRUE,xticks=my_ticks,xticks.digits=5,
+           grid=T,
+           boxsize=0.3,
+           fn.ci_norm = fpDrawDiamondCI,
+           new_page=F
+)
+dev.off()
+
+# --- Plot effect of continuous variables --- #
 
 # Get effects of h-index for women
 varnames_f <- c("gender_h_index_ptile",
@@ -292,7 +408,7 @@ names(plot_effects) <- c("pred_f","ci.lb_f","ci.ub_f",
                          "pred_n_pubs","ci.lb_n_pubs","ci.ub_n_pubs")
 plot_effects$ptile <- ptile*10
 
-OR_plot_int <- plot_ly(plot_effects, x = ~ptile, y= ~pred_f, height=700,width=600) %>%
+OR_plot_int <- plot_ly(plot_effects, x = ~ptile, y= ~pred_f, height=700,width=600, type="scatter") %>%
   # add horizontal line for null value
   add_trace(x = c(0,100), y= c(1,1), mode = "lines", color=I("black"),
             showlegend=F) %>%
@@ -335,7 +451,7 @@ OR_plot_int <- plot_ly(plot_effects, x = ~ptile, y= ~pred_f, height=700,width=60
 export(OR_plot_int, "./results/OR_h_index_int1.pdf")
 
 # Plot
-OR_plot <- plot_ly(plot_effects, x = ~ptile, y= ~pred_years_in_scopus, height=700,width=600) %>%
+OR_plot <- plot_ly(plot_effects, x = ~ptile, y= ~pred_years_in_scopus, height=700,width=600, type="scatter") %>%
   # add horizontal line for null value
   add_trace(x = c(0,100), y= c(1,1), mode = "lines", color=I("black"),
             showlegend=F) %>%
@@ -388,6 +504,64 @@ all_1stage_EM_npubs <- clogit(case ~ gender + gender_n_pubs_ptile +
 cat("\n\n***Effect modification by number of publications***\n\n")
 summary(all_1stage_EM_npubs)
 
+# --- Plot gender effect by h-index -- #
+OR_df <- data.frame(ptile=c("10th","30th","50th","70th","90th"),
+                    OR=numeric(length=5),ci.lb=numeric(length=5),ci.ub=numeric(length=5))
+
+OR_df$OR <- exp(all_1stage_EM_npubs$coefficients[1] + deciles*all_1stage_EM_npubs$coefficients[2])
+logOR_se <- sqrt(all_1stage_EM_npubs$var[1,1] + deciles^2*all_1stage_EM_npubs$var[2,2] + 2*deciles*all_1stage_EM_npubs$var[1,2])
+
+OR_df$ci.lb <- OR_df$OR*exp(-1.96*logOR_se)
+OR_df$ci.ub <- OR_df$OR*exp(1.96*logOR_se)
+
+tablehead <- rbind(c("Number of\n Publications","Percentile of Number\n of Publications","OR (95%CI)"),
+                   rep(NA,3))
+
+# Get number of years active corresponding approximately to each decile
+dec1 <- unique(icc_df$Total_Publications_In_Scopus[icc_df$n_pubs_ptile>0.95 & icc_df$n_pubs_ptile<1.05 & !is.na(icc_df$n_pubs_ptile)])
+dec3 <- unique(icc_df$Total_Publications_In_Scopus[icc_df$n_pubs_ptile>2.95 & icc_df$n_pubs_ptile<3.05 & !is.na(icc_df$n_pubs_ptile)])
+dec5 <- unique(icc_df$Total_Publications_In_Scopus[icc_df$n_pubs_ptile>3.95 & icc_df$n_pubs_ptile<4.05 & !is.na(icc_df$n_pubs_ptile)])
+dec7 <-  unique(icc_df$Total_Publications_In_Scopus[icc_df$n_pubs_ptile>6.98 & icc_df$n_pubs_ptile<7.02 & !is.na(icc_df$n_pubs_ptile)])
+dec9 <- unique(icc_df$Total_Publications_In_Scopus[icc_df$n_pubs_ptile>8.995 & icc_df$n_pubs_ptile<9.005 & !is.na(icc_df$n_pubs_ptile)])
+n_pubs <- c(dec1,dec3,dec5,dec7,dec9)
+tablenum <- cbind(n_pubs,
+                  as.character(OR_df$ptile),
+                  sapply(1:nrow(OR_df),formatting_fun,or=OR_df$OR,ci.lb=OR_df$ci.lb,ci.ub=OR_df$ci.ub)
+)
+
+tabletext <- rbind(tablehead,tablenum)
+
+means <- c(NA,NA,OR_df$OR)
+lowers <- c(NA,NA,OR_df$ci.lb)
+uppers <- c(NA,NA,OR_df$ci.ub)
+
+# make plot/table
+my_ticks <- c(2/3,1,3/2)
+attr(my_ticks,"labels") <- c("2/3","1","3/2")
+pdf(file="./results/ORs_int_n_pubs.pdf",width=8,height=3)
+forestplot(tabletext,mean=means,lower=lowers,upper=uppers,
+           #align=c("l",rep("r",ncol(tabletext)-1)),
+           align=rep("c",3),
+           zero=1,
+           is.summary=c(TRUE,TRUE,rep(FALSE,nrow(tabletext)-2)),
+           col=fpColors(box=c(cols3[3])),
+           xlab="      Favors Men    Favors Women",
+           graphwidth=unit(100,units="points"),
+           lineheight=unit(22,units="points"),
+           colgap=unit(6,"mm"),
+           line.margin=0.2,
+           txt_gp = fpTxtGp(ticks = gpar(fontfamily = "", cex=0.9),
+                            xlab  = gpar(cex = 1.2)),
+           xlog=TRUE,xticks=my_ticks,xticks.digits=5,
+           grid=T,
+           boxsize=0.3,
+           fn.ci_norm = fpDrawDiamondCI,
+           new_page=F
+)
+dev.off()
+
+# --- Plot effect of continuous variables --- #
+
 # Get effects of number of pubs for women
 varnames_f <- c("gender_n_pubs_ptile",
                 "ns(n_pubs_ptile, knots = knots)")
@@ -409,7 +583,7 @@ names(plot_effects) <- c("pred_f","ci.lb_f","ci.ub_f",
                          "pred_h_index","ci.lb_h_index","ci.ub_h_index")
 plot_effects$ptile <- ptile*10
 
-OR_plot_int <- plot_ly(plot_effects, x = ~ptile, y= ~pred_f, height=700,width=600) %>%
+OR_plot_int <- plot_ly(plot_effects, x = ~ptile, y= ~pred_f, height=700,width=600, type="scatter") %>%
   # add horizontal line for null value
   add_trace(x = c(0,100), y= c(1,1), mode = "lines", color=I("black"),
             showlegend=F) %>%
@@ -452,7 +626,7 @@ OR_plot_int <- plot_ly(plot_effects, x = ~ptile, y= ~pred_f, height=700,width=60
 export(OR_plot_int, "./results/OR_n_pubs_int1.pdf")
 
 # Plot
-OR_plot <- plot_ly(plot_effects, x = ~ptile, y= ~pred_years_in_scopus, height=700,width=600) %>%
+OR_plot <- plot_ly(plot_effects, x = ~ptile, y= ~pred_years_in_scopus, height=700,width=600, type="scatter") %>%
   # add horizontal line for null value
   add_trace(x = c(0,100), y= c(1,1), mode = "lines", color=I("black"),
             showlegend=F) %>%
@@ -494,82 +668,28 @@ OR_plot <- plot_ly(plot_effects, x = ~ptile, y= ~pred_years_in_scopus, height=70
 
 export(OR_plot, "./results/OR_n_pubs_int2.pdf")
 
-# -------------------- Plot gender effect by years active --------------------- #
-deciles <- c(1,3,5,7,9)
-
-OR_df <- data.frame(ptile_YiS=c("10th","30th","50th","70th","90th"),
-                    OR=numeric(length=5),ci.lb=numeric(length=5),ci.ub=numeric(length=5))
-
-OR_df$OR <- exp(all_1stage_EM_YiS$coefficients[1] + deciles*all_1stage_EM_YiS$coefficients[14])
-
-logOR_se <- sqrt(all_1stage_EM_YiS$var[1,1] + deciles^2*all_1stage_EM_YiS$var[14,14] + 2*deciles*all_1stage_EM_YiS$var[1,14])
-
-OR_df$ci.lb <- OR_df$OR*exp(-1.96*logOR_se)
-OR_df$ci.ub <- OR_df$OR*exp(1.96*logOR_se)
-
-tablehead <- rbind(c("Percentile","Years Active","OR (95%CI)"),
-                   rep(NA,3))
-
-unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>0.9 & icc_df$years_in_scopus_ptile<1.1])
-unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>2.8 & icc_df$years_in_scopus_ptile<3.2])
-unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>3.8 & icc_df$years_in_scopus_ptile<4.2])
-unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>6.9 & icc_df$years_in_scopus_ptile<7.1])
-unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>8.94 & icc_df$years_in_scopus_ptile<9.06])
-years <- c(8,14,16,27,38)
-tablenum <- cbind(as.character(OR_df$ptile_YiS),
-                  years,
-                  sapply(1:nrow(OR_df),formatting_fun,or=OR_df$OR,ci.lb=OR_df$ci.lb,ci.ub=OR_df$ci.ub)
-)
-
-tabletext <- rbind(tablehead,tablenum)
-
-means <- c(NA,NA,OR_df$OR)
-lowers <- c(NA,NA,OR_df$ci.lb)
-uppers <- c(NA,NA,OR_df$ci.ub)
-
-# make plot/table
-my_ticks <- c(2/3,1,3/2)
-attr(my_ticks,"labels") <- c("2/3","1","3/2")
-pdf(file="./results/ORs_interaction.pdf",width=7,height=3)
-forestplot(tabletext,mean=means,lower=lowers,upper=uppers,
-           #align=c("l",rep("r",ncol(tabletext)-1)),
-           align=rep("c",3),
-           zero=1,
-           is.summary=c(TRUE,TRUE,rep(FALSE,nrow(tabletext)-2)),
-           col=fpColors(box=c(cols2[5])),
-           xlab="      Favors Men    Favors Women",
-           graphwidth=unit(100,units="points"),
-           lineheight=unit(22,units="points"),
-           colgap=unit(6,"mm"),
-           line.margin=0.2,
-           txt_gp = fpTxtGp(ticks = gpar(fontfamily = "", cex=0.9),
-                            xlab  = gpar(cex = 1.2)),
-           xlog=TRUE,xticks=my_ticks,xticks.digits=5,
-           grid=T,
-           boxsize=0.3,
-           fn.ci_norm = fpDrawDiamondCI,
-           new_page=F
-)
-dev.off()
-
 cat("\n\n------------ Case control analysis by journal ----------------\n\n")
+
+cat("Here, we control for h-index and number of publications using quadratic terms
+    since most journals don't have enough data to use splines (too many parameters!).
+    We leave years active as a linear term since this variables was close to linear
+    in our one-stage meta-analysis.\n\n")
 
 journals <- icc_df[!duplicated(icc_df$pub_sourceid),c("pub_sourceid","citescore","include.journal")]
 outputs_df <- data.frame(journal=journals$pub_sourceid,
                          n_cases=numeric(length=nrow(journals))+NA,
                          effect=numeric(length=nrow(journals))+NA,
-                         sd=numeric(length=nrow(journals))+NA,
+                         sd=numeric(length=nrow(journals))+NA, 
                          pval=numeric(length=nrow(journals))+NA,
                          n_cases_adj=numeric(length=nrow(journals))+NA,
                          effect_adj=numeric(length=nrow(journals))+NA,
                          sd_adj=numeric(length=nrow(journals))+NA,
                          pval_adj=numeric(length=nrow(journals))+NA,
+                         n_cases_int=numeric(length=nrow(journals))+NA,
+                         effect_main=numeric(length=nrow(journals))+NA,
+                         sd_main=numeric(length=nrow(journals))+NA,
                          effect_int=numeric(length=nrow(journals))+NA,
                          sd_int=numeric(length=nrow(journals))+NA,
-                         pval_int=numeric(length=nrow(journals))+NA,
-                         effect_int2=numeric(length=nrow(journals))+NA,
-                         sd_int2=numeric(length=nrow(journals))+NA,
-                         pval_int2=numeric(length=nrow(journals))+NA,
                          citescore=journals$citescore,
                          included=journals$include.journal)
 
@@ -585,39 +705,58 @@ for(i in 1:nrow(journals)){
     outputs_df$pval[i] <- summary(mod)$coefficients[1,5]
     outputs_df$n_cases[i] <- summary(mod)$nevent
   } else {
-    outputs_df$n_cases[i] <- sum(icc_df$pub_sourceid == outputs_df$journal[i])
+    outputs_df$n_cases[i] <- sum(icc_df$case[icc_df$pub_sourceid == outputs_df$journal[i]])
   }
   # Adjusted model
   mod_adj <- tryCatch(clogit(case ~ Gender + 
-                               ns(years_in_scopus_ptile,knots=knots) + 
-                               ns(h_index_ptile,knots=knots) + 
-                               ns(n_pubs_ptile,knots=knots) + 
+                               years_in_scopus_ptile + 
+                               h_index_ptile + h_index_ptile2 + 
+                               n_pubs_ptile + n_pubs_ptile2 + 
                                strata(pub_id), 
                              icc_df, 
                              subset= pub_sourceid == outputs_df$journal[i]),
                       error=function(err) NA) # If the model won't run, return NA
+    # tryCatch(clogit(case ~ Gender + 
+    #                            ns(years_in_scopus_ptile,knots=knots) + 
+    #                            ns(h_index_ptile,knots=knots) + 
+    #                            ns(n_pubs_ptile,knots=knots) + 
+    #                            strata(pub_id), 
+    #                          icc_df, 
+    #                          subset= pub_sourceid == outputs_df$journal[i]),
+    #                   error=function(err) NA) # If the model won't run, return NA
   if(!is.na(mod_adj)){
     outputs_df$effect_adj[i] <- mod_adj$coefficients[1]
     outputs_df$sd_adj[i] <- sqrt(mod_adj$var[1])
     outputs_df$pval_adj[i] <- summary(mod_adj)$coefficients[1,5]
     outputs_df$n_cases_adj[i] <- summary(mod_adj)$nevent
+  } else {
+    outputs_df$n_cases_adj[i] <- sum(icc_df$case[icc_df$pub_sourceid == outputs_df$journal[i] & !is.na(icc_df$H_Index)])
   }
   # Adjusted model with interaction
-  mod_int <- tryCatch(clogit(case ~ gender + gender_years_in_scopus_ptile + 
-                               ns(years_in_scopus_ptile,knots=knots) +
-                               ns(h_index_ptile,knots=knots) + 
-                               ns(n_pubs_ptile,knots=knots) + 
+  mod_int <- tryCatch(clogit(case ~ gender + gender_years_in_scopus_ptile +
+                               years_in_scopus_ptile + 
+                               h_index_ptile + h_index_ptile2 + 
+                               n_pubs_ptile + n_pubs_ptile2 + 
                                strata(pub_id), 
                              icc_df, 
                              subset= pub_sourceid == outputs_df$journal[i]),
                       error=function(err) NA) # If the model won't run, return NA
+    # tryCatch(clogit(case ~ gender + gender_years_in_scopus_ptile + 
+    #                            ns(years_in_scopus_ptile,knots=knots) +
+    #                            ns(h_index_ptile,knots=knots) + 
+    #                            ns(n_pubs_ptile,knots=knots) + 
+    #                            strata(pub_id), 
+    #                          icc_df, 
+    #                          subset= pub_sourceid == outputs_df$journal[i]),
+    #                   error=function(err) NA) # If the model won't run, return NA
   if(!is.na(mod_int)){
-    outputs_df$effect_int[i] <- mod_int$coefficients[1]
-    outputs_df$sd_int[i] <- sqrt(mod_int$var[1,1])
-    outputs_df$pval_int[i] <- summary(mod_int)$coefficients[1,5]
-    outputs_df$effect_int2[i] <- mod_int$coefficients[2]
-    outputs_df$sd_int2[i] <- sqrt(mod_int$var[2,2])
-    outputs_df$pval_int2[i] <- summary(mod_int)$coefficients[2,5]
+    outputs_df$n_cases_int[i] <- summary(mod_int)$nevent
+    outputs_df$effect_main[i] <- mod_int$coefficients[1]
+    outputs_df$sd_main[i] <- sqrt(mod_int$var[1,1])
+    outputs_df$effect_int[i] <- mod_int$coefficients[2]
+    outputs_df$sd_int[i] <- sqrt(mod_int$var[2,2])
+  } else {
+    outputs_df$n_cases_int[i] <- sum(icc_df$case[icc_df$pub_sourceid == outputs_df$journal[i] & !is.na(icc_df$H_Index)])
   }
   if((i %% 100)==0) print(i)
 }
@@ -636,8 +775,22 @@ summary(abs(outputs_df$effect[outputs_df$included]))
 cat("\n\n---Summary of sd for journals that did meet criteria:---\n")
 summary(abs(outputs_df$sd[outputs_df$included]))
 
+n_cases_min <- 50
+cat("\n\n---Summary of abs(log OR_adj) for journals that did meet criteria:---\n")
+summary(abs(outputs_df$effect_adj[outputs_df$included & outputs_df$n_cases > n_cases_min]))
+cat("\n\n---Summary of sd_adj for journals that did meet criteria:---\n")
+summary(abs(outputs_df$sd_adj[outputs_df$included & outputs_df$n_cases > n_cases_min]))
+
+cat("\n\n---Summary of abs(log OR_main) for journals that did meet criteria:---\n")
+summary(abs(outputs_df$effect_main[outputs_df$included & (outputs_df$n_cases > n_cases_min)]))
+cat("\n\n---Summary of sd_main for journals that did meet criteria:---\n")
+summary(abs(outputs_df$sd_main[outputs_df$included & (outputs_df$n_cases > n_cases_min)]))
+
 # Data frame with only valid ORs
 outputs_select <- outputs_df[outputs_df$included,]
+
+# # set to NA invalid estimates for adjusted OR
+# outputs_select$effect_adj[outputs_select$sd_adj > 2] <- NA
 
 # Get ORs and CIs
 outputs_select$node_size <- 1/outputs_select$sd
@@ -648,9 +801,6 @@ outputs_select$node_size_adj <- 1/outputs_select$sd_adj
 outputs_select$OR_adj <- exp(outputs_select$effect_adj)
 outputs_select$ci_lower_adj <- exp(outputs_select$effect_adj-1.96*outputs_select$sd_adj)
 outputs_select$ci_upper_adj <- exp(outputs_select$effect_adj+1.96*outputs_select$sd_adj)
-
-# set to NA invalid estimates for adjusted OR
-outputs_select$effect_adj[outputs_select$sd_adj > 2] <- NA
 
 # Merge in journal topics
 journal_topics <- readRDS(file = "./data/journal_topics.rds")

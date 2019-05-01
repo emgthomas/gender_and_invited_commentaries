@@ -76,7 +76,7 @@ authors5 <- authors4 %>%
   group_by(pub_id) %>%
   mutate(match_score_rank = frank(-Match_Score))
 authors5 <- authors5[order(authors5$pub_id,authors5$Match_Score,decreasing=T),]
-View(authors5[,c("pub_id","case","Match_Score","match_score_rank")])
+# View(authors5[,c("pub_id","case","Match_Score","match_score_rank")])
 authors5 <- authors5[authors5$match_score_rank <= 11, ] # keep 11 because the top match is always the case themself
 
 cat("\n\n------- Flow chart Step 6 (Included)------- \n\n")
@@ -173,7 +173,7 @@ cat("Journals with insufficient data for journal-specific estimate = ",length(in
 
 cat("\n\n------- Flow chart Step 10 (Included)------- \n\n")
 cat("Journals included in two-stage meta-analysis = ",sum(included.journals$include.journal))
-cat("Matched included in two-stage meta-analysis = ",sum(icc_df$case[icc_df$include.journal]))
+cat("\n\nMatched included in two-stage meta-analysis = ",sum(icc_df$case[icc_df$include.journal]))
 
 # Create factor variables
 icc_df$Gender <- factor(icc_df$Gender, levels=c("male","female"))
@@ -225,6 +225,27 @@ n_pubs <- n_pubs[!duplicated(n_pubs),]
 n_pubs$n_pubs_ptile <- percent_rank(n_pubs$Total_Publications_In_Scopus)/0.1
 icc_df_all <- merge(icc_df_all,n_pubs[,c("auth_id","n_pubs_ptile")],by="auth_id",all.x=T,all.y=F)
 
+#### Merge in author country data ####
+country <- readRDS("./data/author_countries_raw.rds")
+country$country <- as.character(country$country)
+# UNSD country codes, downloaded April 23, 2019 from https://unstats.un.org/unsd/methodology/m49/overview/ 
+country_codes <- read.csv("./data/UNSD_country_codes.csv")
+# change three letter country code to lower case
+country_codes$country <- tolower(country_codes$ISO.alpha3.Code)
+country_codes <- country_codes[country_codes$country != "",c("country","Region.Name")]
+# Merge in
+country <- merge(country,country_codes,by="country",all.x=T,all.y=F)
+# Do some manually
+asian_countries_missed <- c("hkg","twn") # Hong Kong, Taiwan
+country$Region.Name[country$country %in% asian_countries_missed] <- "Asia"
+country$Asia <- country$Region.Name == "Asia"
+# Which authors published in an Asian country at least once in their first year?
+authors_asian <- tapply(country$Asia,as.character(country$auth_id),sum,na.rm=T)
+authors_asian <- data.frame(auth_id=names(authors_asian),asia=as.integer(authors_asian>=1))
+# merge into authors dataset
+icc_df_all <- merge(icc_df_all,authors_asian,by="auth_id",all.x=T,all.y=F)
+
+#### Merge in journal topics ####
 # Read in journal topics
 journal_topics <- read.csv(file="./data/All_Journals_ASJC.csv")
 # Keep only medical or multidisciplinary topics (some journals have extra ASJC codes outside our range of interest)

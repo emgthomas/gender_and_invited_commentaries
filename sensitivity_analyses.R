@@ -12,6 +12,7 @@ require(splines)
 require(metafor)
 require(dplyr)
 require(ggplot2)
+require(plotly)
 require(reshape2)
 require(lme4)
 require(mice)
@@ -20,21 +21,23 @@ cat("\n\n--------------------------------------------------------------------\n\
 cat("\n\n--------------------- Two-stage meta-analysis ----------------------\n\n")
 cat("\n\n--------------------------------------------------------------------\n\n")
 
-outputs_select <- readRDS("./shiny_app/journal_ORs.rds")
-
 cat("********** Undjusted model ************\n\n")
 
+outputs_select <- readRDS("./shiny_app/journal_ORs.rds")
+
+# # Check: using the rma function should give the same result as rma.mv above.
+# all_2stage <- rma.mv(effect,sd^2,random=~1|journal,data=outputs_select)
+# cat("---Summary of random effects meta-analysis for unadjusted model---\n\n")
+# summary(all_2stage)
+# cat("\n\n---Mean and confidence (ci)/prediction (cr) intervals on odds ratio scale---\n\n")
+# predict(all_2stage, transf=exp, digits=2)
+
 # Meta-analysis for unadjusted model
-all_2stage <- rma.mv(effect,sd^2,random=~1|journal,data=outputs_select)
+all_2stage <- rma(effect,sd^2,data=outputs_select)
 cat("---Summary of random effects meta-analysis for unadjusted model---\n\n")
 summary(all_2stage)
 cat("\n\n---Mean and confidence (ci)/prediction (cr) intervals on odds ratio scale---\n\n")
 predict(all_2stage, transf=exp, digits=2)
-
-### Check: using the rma function should give the same result as rma.mv above.
-# all_2stage <- rma(effect,sd^2,data=outputs_select)
-# summary(all_2stage)
-# predict(all_2stage, transf=exp, digits=2)
 
 cat("\n\n---Meta-regression on journal citescore---\n\n")
 # Meta-regression on journal citescore
@@ -67,7 +70,7 @@ plot_citescore$citescore <- citescore_newmods
 # Plot
 cols1 <- brewer.pal(9,name="BuGn")
 cols2 <- brewer.pal(9,name="Oranges")
-OR_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~OR,height=600,width=1000) %>%
+OR_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~OR,height=600,width=1000, type="scatter") %>%
   # add horizontal line for null value
   add_trace(x = c(0,18), y= c(1,1), mode = "lines", color=I("black"),
             showlegend=F) %>%
@@ -117,9 +120,20 @@ export(OR_plot, "./results/OR_citescore_metareg.pdf")
 
 cat("\n\n********** Adjusted model ************\n\n")
 
+# # Meta-analysis for adjusted model
+# all_2stage_adj <- rma.mv(effect_adj,sd_adj^2,random=~1|journal,data=outputs_select)
+# cat("\n\n---Summary of random effects meta-analysis for adjusted model---\n\n")
+# summary(all_2stage_adj)
+# cat("\n\n---Mean and confidence (ci)/prediction (cr) intervals on odds ratio scale---\n\n")
+# predict(all_2stage_adj, transf=exp, digits=2)
+
 # Meta-analysis for adjusted model
-all_2stage_adj <- rma.mv(effect_adj,sd_adj^2,random=~1|journal,data=outputs_select)
-cat("\n\n---Summary of random effects meta-analysis for adjusted model---\n\n")
+outputs_select <- readRDS("./shiny_app/journal_ORs.rds")
+# Some journals are omitted due to large standard errors
+outputs_select$OR_adj[outputs_select$sd_adj>2500] <- NA
+outputs_select$sd_adj[outputs_select$sd_adj>2500] <- NA
+all_2stage_adj <- rma(effect_adj,sd_adj^2,data=outputs_select)
+cat("---Summary of random effects meta-analysis for unadjusted model---\n\n")
 summary(all_2stage_adj)
 cat("\n\n---Mean and confidence (ci)/prediction (cr) intervals on odds ratio scale---\n\n")
 predict(all_2stage_adj, transf=exp, digits=2)
@@ -145,7 +159,7 @@ plot_citescore_adj <- predict(meta_analysis_cs_adj,newmods=citescore_bs[1:nrow(c
 plot_citescore_adj <- plot_citescore_adj[,c("pred","ci.lb","ci.ub","cr.lb","cr.ub")]
 plot_citescore_adj$citescore <- citescore_newmods
 
-OR_adj_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~OR_adj,height=600,width=1000) %>%
+OR_adj_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~OR_adj,height=600,width=1000, type="scatter") %>%
   # add horizontal line for null value
   add_trace(x = c(0,18), y= c(1,1), mode = "lines", color=I("black"),
             showlegend=F) %>%
@@ -195,19 +209,27 @@ export(OR_adj_plot, "./results/OR_adj_citescore_metareg.pdf")
 cat("\n\n********** Model with interaction ************\n\n")
 
 # Main effect
-all_2stage_int <- rma.mv(effect_int,sd_int^2,random=~1|journal,data=outputs_select)
-cat("\n\n---Summary of random effects meta-analysis for interaction with years active---\n\n")
-cat("\n\n-- Main effect--\n\n")
+outputs_select <- readRDS("./shiny_app/journal_ORs.rds")
+# Some estiamtes must be excluded due to large standard errors
+# and for consistency with the interaction term below
+outputs_select$OR_main[outputs_select$sd_int>290] <- NA
+outputs_select$sd_main[outputs_select$sd_int>290] <- NA
+all_2stage_main <- rma(effect_main,sd_main^2,data=outputs_select)
+cat("---Summary of random effects meta-analysis for unadjusted model---\n\n")
+summary(all_2stage_main)
+cat("\n\n---Mean and confidence (ci)/prediction (cr) intervals on odds ratio scale---\n\n")
+predict(all_2stage_main, transf=exp, digits=2)
+
+# Interaction term
+outputs_select <- readRDS("./shiny_app/journal_ORs.rds")
+# Some estiamtes must be excluded due to large standard errors
+outputs_select$OR_int[outputs_select$sd_int>290] <- NA
+outputs_select$sd_int[outputs_select$sd_int>290] <- NA
+all_2stage_int <- rma(effect_int,sd_int^2,data=outputs_select)
+cat("---Summary of random effects meta-analysis for unadjusted model---\n\n")
 summary(all_2stage_int)
 cat("\n\n---Mean and confidence (ci)/prediction (cr) intervals on odds ratio scale---\n\n")
 predict(all_2stage_int, transf=exp, digits=2)
-
-# Interaction term
-all_2stage_int2 <- rma.mv(effect_int2,sd_int2^2,random=~1|journal,data=outputs_select)
-cat("\n\n-- Interaction term--\n\n")
-summary(all_2stage_int2)
-cat("\n\n---Mean and confidence (ci)/prediction (cr) intervals on odds ratio scale---\n\n")
-predict(all_2stage_int2, transf=exp, digits=2)
 
 cat("\n\n---------------------------------------------------------\n\n")
 cat("\n\n--------------------- Missing data ----------------------\n\n")
@@ -253,6 +275,58 @@ cat("\n\n----------------- Multiple imputation ---------------\n\n")
 
 icc_df_all <- readRDS(file="./data/processed_data_all.rds")
 
+cat("--------------------------------------------------\n\n")
+cat("--------------------- Table S1 -------------------\n\n")
+cat("--------------------------------------------------\n\n")
+
+cat("-----------------Author-level variables for *unique* authors by gender, including those with missing gender----------------\n\n")
+
+unique_authors <- icc_df_all[,c("auth_id","Gender","case",
+                                "years_in_scopus","Total_Publications_In_Scopus",
+                                "H_Index","asia")]
+unique_authors <- unique_authors[!duplicated(unique_authors),]
+controls <- unique(unique_authors$auth_id[unique_authors$case==0])
+cases <- unique(unique_authors$auth_id[unique_authors$case==1])
+both <- intersect(controls,cases)
+
+# actual unique authors, de-duplicating those that act as both case and control
+unique_authors2 <- unique_authors[,c("auth_id","Gender",
+                                     "years_in_scopus","Total_Publications_In_Scopus",
+                                     "H_Index","asia")]
+unique_authors2 <- unique_authors2[!duplicated(unique_authors2),]
+unique_authors2$status <- "Control"
+unique_authors2$status[unique_authors2$auth_id %in% cases] <- "Case"
+unique_authors2$status[unique_authors2$auth_id %in% both] <- "Both"
+unique_authors2$status <- factor(unique_authors2$status,levels=c("Case","Control","Both"))
+
+cat("\n\n----Gender----\n\n")
+CrossTable(unique_authors2$status,unique_authors2$Gender,
+           prop.r=F,prop.c=T,prop.t=F,prop.chisq=F)
+
+cat("\n\n----Asian country of origin----\n\n")
+unique_authors2$country_of_origin <- "Asian"
+unique_authors2$country_of_origin[unique_authors2$asia==0] <- "Not Asian"
+unique_authors2$country_of_origin[is.na(unique_authors2$asia)] <- "Unknown"
+CrossTable(unique_authors2$country_of_origin,unique_authors2$Gender,
+           prop.r=F,prop.c=T,prop.t=F,chisq=F,prop.chisq=F)
+
+cat("\n\n----Quartiles of years since first publication----\n\n")
+tapply(unique_authors2$years_in_scopus,unique_authors2$Gender,quantile,probs=c(0.25,0.5,0.75),na.rm=T)
+cat("\nAll:\n\n")
+quantile(unique_authors2$years_in_scopus,probs=c(0.25,0.5,0.75),na.rm=T)
+
+cat("\n\n----Number of publications----\n\n")
+tapply(unique_authors2$Total_Publications_In_Scopus,unique_authors2$Gender,quantile,probs=c(0.25,0.5,0.75),na.rm=T)
+cat("\nAll:\n\n")
+quantile(unique_authors2$Total_Publications_In_Scopus,probs=c(0.25,0.5,0.75),na.rm=T)
+
+cat("\n\n----H-Index----\n\n")
+tapply(unique_authors2$H_Index,unique_authors2$Gender,quantile,probs=c(0.25,0.5,0.75),na.rm=T)
+cat("\nAll:\n\n")
+quantile(unique_authors2$H_Index,probs=c(0.25,0.5,0.75),na.rm=T)
+
+cat("-----------------Multiple imputation analysis----------------\n\n")
+
 # How many imputed datasets?
 n.impute <- 10
 
@@ -263,11 +337,16 @@ icc_df_to_impute$gender[icc_df_all$Gender=="female"] <- 1
 icc_df_to_impute$gender[icc_df_to_impute$Gender=="unknown"] <- NA
 icc_df_to_impute <- icc_df_to_impute[!(is.na(icc_df_to_impute$H_Index) |
                                          is.na(icc_df_to_impute$Total_Publications_In_Scopus) |
-                                         is.na(icc_df_to_impute$years_in_scopus_ptile)),]
-icc_df_to_impute <- icc_df_to_impute[,c("pub_sourceid","pub_id","case","gender","years_in_scopus_ptile","h_index_ptile","n_pubs_ptile")]
+                                         is.na(icc_df_to_impute$years_in_scopus_ptile) |
+                                         is.na(icc_df_to_impute$asia)),]
+icc_df_to_impute <- icc_df_to_impute[,c("pub_sourceid","pub_id","case","gender","asia",
+                                        "years_in_scopus_ptile","h_index_ptile","n_pubs_ptile")]
 icc_df_to_impute$case_years_in_scopus <- icc_df_to_impute$case*icc_df_to_impute$years_in_scopus_ptile
 icc_df_to_impute$case_h_index <- icc_df_to_impute$case*icc_df_to_impute$h_index_ptile
 icc_df_to_impute$case_n_pubs <- icc_df_to_impute$case*icc_df_to_impute$n_pubs_ptile
+
+# How many cases/controls are Asian?
+CrossTable(icc_df_to_impute$case,icc_df_to_impute$asia)
 
 # run imputation model
 knots <- c(2.5,5,7.5)
@@ -275,6 +354,7 @@ mod_impute <- glmer(gender ~ case +
                case_years_in_scopus +
                case_h_index +
                case_n_pubs +
+               asia +
                ns(years_in_scopus_ptile,knots=knots) + 
                ns(h_index_ptile,knots=knots) + 
                ns(n_pubs_ptile,knots=knots) +
@@ -339,7 +419,8 @@ imputed_mods_int <- lapply(imputed_dfs,
                            FUN=clogit,
                            formula=case ~ gender + years_in_scopus_ptile:gender + 
                              ns(years_in_scopus_ptile,knots=knots) + 
-                             ns(h_index_ptile,knots=knots) + ns(n_pubs_ptile,knots=knots) + 
+                             ns(h_index_ptile,knots=knots) + 
+                             ns(n_pubs_ptile,knots=knots) + 
                              strata(pub_id)
                     ) %>% as.mira
 
@@ -353,72 +434,9 @@ res_imp_int_df <- data.frame(
 row.names(res_imp_int_df) <- row.names(res_imp_int)
 res_imp_int_df
 
-cat("\n\n---------------------------------------------------------------------------------\n\n")
-cat("\n\n--------------------- Stricter match criteria for controls ----------------------\n\n")
-cat("\n\n---------------------------------------------------------------------------------\n\n")
-
-icc_df <- readRDS(file="./data/processed_data_no_missing.rds")
-
-######### Removing controls with low match scores ##########
-
-all_1stage_int <- clogit(case ~ Gender + 
-                           years_in_scopus_ptile:factor(Gender,levels=c("female","male")) + 
-                           ns(years_in_scopus_ptile,knots=knots) + 
-                           ns(h_index_ptile,knots=knots) + 
-                           ns(n_pubs_ptile,knots=knots) + 
-                           strata(pub_id), data = icc_df)
-summary(all_1stage_int)
-
-######### Removing controls with low match scores ##########
-
-n_quantiles <- max(icc_df$match_quantile)
-resControls <- as.data.frame(matrix(nrow=n_quantiles-1,ncol=16))
-names(resControls) <- c("lowest_decile","gender_cases","h_index_female_cases","h_index_male_cases",
-                        "n_pubs_female_cases","n_pubs_male_cases",
-                        "years_active_female_cases","years_active_male_cases",
-                        "n_case","OR","OR_ci.lb","OR_ci.ub",
-                        "n_case.2","OR.2","OR_ci.lb.2","OR_ci.ub.2")
-resControls$lowest_decile <- 1:(n_quantiles-1)
-for(i in 1:(n_quantiles-1)){
-  # Prepare dataset
-  icc_df_i <- subset(icc_df,match_quantile>=i)
-  which_pubs <- tapply(icc_df_i$case,icc_df_i$pub_id,length)
-  which_pubs <- names(which_pubs[which_pubs>1])
-  icc_df_i <- icc_df_i[icc_df_i$pub_id %in% which_pubs,]
-  # Run models
-  mod <- summary(clogit(case ~ Gender + strata(pub_id), data = icc_df_i))
-  mod_adj <- summary(clogit(case ~ Gender + ns(years_in_scopus_ptile,knots=knots) + 
-                              #ns(h_index_ptile,knots=knots) + ns(n_pubs_ptile,knots=knots) + 
-                              strata(pub_id), data = icc_df_i))
-  # Store in data frame
-  resControls$gender_cases[i] <- mean(icc_df_i$Gender[icc_df_i$case==1] == "female")
-  resControls$h_index_female_cases[i] <- median(icc_df_i$H_Index[icc_df_i$case==1 & icc_df_i$Gender=="female"])
-  resControls$h_index_male_cases[i] <- median(icc_df_i$H_Index[icc_df_i$case==1 & icc_df_i$Gender=="male"])
-  resControls$n_pubs_female_cases[i] <- median(icc_df_i$Total_Publications_In_Scopus[icc_df_i$case==1 & icc_df_i$Gender=="female"])
-  resControls$n_pubs_male_cases[i] <- median(icc_df_i$Total_Publications_In_Scopus[icc_df_i$case==1 & icc_df_i$Gender=="male"])
-  resControls$years_active_female_cases[i] <- median(icc_df_i$years_in_scopus[icc_df_i$case==1 & icc_df_i$Gender=="female"])
-  resControls$years_active_male_cases[i] <- median(icc_df_i$years_in_scopus[icc_df_i$case==1 & icc_df_i$Gender=="male"])
-  resControls[i,9:16] <- c(mod$nevent,mod$coefficients[2],mod$conf.int[3:4],
-                           mod_adj$nevent,mod_adj$coefficients[1,2],mod_adj$conf.int[1,3:4])
-}
-
-resControls_df <- reshape(resControls,direction="long",varying=list(c("n_case","n_case.2"),
-                                                                    c("OR","OR.2"),
-                                                                    c("OR_ci.lb","OR_ci.lb.2"),
-                                                                    c("OR_ci.ub","OR_ci.ub.2")),
-                          times=c("unadjusted","adjusted"))
-names(resControls_df)[names(resControls_df)=="time"] <- "model"
-resControls_df$lowest_decile <- as.factor(resControls_df$lowest_decile)
-plot1 <- ggplot(resControls_df,aes(x=lowest_decile,y=OR,color=model)) + 
-  geom_pointrange(aes(ymin=OR_ci.lb,ymax=OR_ci.ub)) +
-  ylab("OR (95%CI)") + xlab("Lowest decile of included controls based on match score") +
-  theme(panel.grid.major.x = element_blank())
-
-plot2 <- ggplot(subset(icc_df,case==0),aes(y=Match_Score,x=Gender)) + 
-  geom_boxplot(outlier.shape=NA) + scale_y_continuous(limits=c(0,110))
-
 cat("\n\n--------------------------------------------------------------------------------------\n\n")
 cat("\n\n------------- De-duplicating case authors present in multiple journals ---------------\n\n")
+cat("\n\n-------------------- and stricter match criteria for controls ------------------------\n\n")
 cat("\n\n--------------------------------------------------------------------------------------\n\n")
 
 icc_df <- readRDS(file="./data/processed_data_no_missing.rds")
@@ -432,7 +450,7 @@ icc_df_dedup$pub_id <- factor(icc_df_dedup$pub_id,levels=unique(icc_df_dedup$pub
 # keep only top two controls
 icc_df_dedup <- icc_df_dedup[icc_df_dedup$match_score_rank <= 3,]
 
-cat("---Unadjusted analysis---\n")
+cat("\n\n---Unadjusted analysis---\n")
 all_1stage_dedup <- clogit(case ~ Gender + strata(pub_id), data = icc_df_dedup)
 summary(all_1stage_dedup)
 

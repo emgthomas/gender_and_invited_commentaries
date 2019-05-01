@@ -13,6 +13,7 @@ require(splines)
 require(forestplot)
 require(plotly)
 require(RColorBrewer)
+require(lmtest)
 
 ## global functions
 source("./code/functions.R")
@@ -26,7 +27,7 @@ journal_topics <- journal_topics[journal_topics$pub_sourceid %in% unique(icc_df$
 
 cat("\n\n------------ Effect modification by journal citescore ----------------\n\n")
 
-# cat("********** Undjusted model ************\n\n")
+cat("********** Undjusted model ************\n\n")
 
 # exclude one journal with high outlier citescore
 icc_df_cs <- subset(icc_df,citescore<20)
@@ -52,8 +53,13 @@ all_1stage_cs <- clogit(case ~ gender +
                           citescore_gender_1 + citescore_gender_2 + 
                           citescore_gender_3 + citescore_gender_4 +
                           strata(pub_id), data = icc_df_cs)
-
 summary(all_1stage_cs)
+
+# model without effect modifcation by cite score
+all_1stage <- clogit(case ~ gender + strata(pub_id), data = icc_df_cs)
+
+cat("\n\nTest for null hypothesis of no effect of Cite Score on odds ratio\n\n")
+lrtest(all_1stage_cs,all_1stage)
 
 ###### Plot of journal-specific ORs with meta-regression on citescore ######
 # set up data for prediction
@@ -82,7 +88,7 @@ plot_citescore$ci.ub <- as.numeric(exp(lp + 1.96*se_lp))
 # Plot
 cols1 <- brewer.pal(9,name="BuGn")
 cols2 <- brewer.pal(9,name="Oranges")
-OR_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~OR,height=600,width=1000) %>%
+OR_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~OR,height=600,width=1000, type="scatter", mode="markers") %>%
   # add horizontal line for null value
   add_trace(x = c(0,18), y= c(1,1), mode = "lines", color=I("black"),
             showlegend=F) %>%
@@ -132,10 +138,21 @@ knots <- c(2.5,5,7.5)
 all_1stage_cs_adj <- clogit(case ~ gender +
                           citescore_gender_1 + citescore_gender_2 + citescore_gender_3 + citescore_gender_4 +
                           ns(years_in_scopus_ptile,knots=knots) +
-                          ns(h_index_ptile,knots=knots) + ns(n_pubs_ptile,knots=knots) +
+                          ns(h_index_ptile,knots=knots) + 
+                          ns(n_pubs_ptile,knots=knots) +
                           strata(pub_id), data = icc_df_cs)
 
 summary(all_1stage_cs_adj)
+
+# model without effect modifcation by cite score
+all_1stage_adj <- clogit(case ~ gender + 
+                           ns(years_in_scopus_ptile,knots=knots) +
+                           ns(h_index_ptile,knots=knots) + 
+                           ns(n_pubs_ptile,knots=knots) +
+                           strata(pub_id), data = icc_df_cs)
+
+cat("\n\nTest for null hypothesis of no effect of Cite Score on odds ratio\n\n")
+lrtest(all_1stage_cs_adj,all_1stage_adj)
 
 ###### Plot of journal-specific ORs with meta-regression on citescore ######
 # Get predicted values
@@ -155,7 +172,7 @@ plot_citescore_adj$ci.lb <- as.numeric(exp(lp - 1.96*se_lp))
 plot_citescore_adj$ci.ub <- as.numeric(exp(lp + 1.96*se_lp))
 
 # Make plot
-OR_adj_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~OR_adj,height=600,width=1000) %>%
+OR_adj_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~OR_adj,height=600,width=1000, type="scatter", mode="markers") %>%
   # add horizontal line for null value
   add_trace(x = c(0,18), y= c(1,1), mode = "lines", color=I("black"),
             showlegend=F) %>%
@@ -235,6 +252,10 @@ outputs_topics$n_cases_2stage[1:n_topics] <- topic_counts$case_counts[1:n_topics
 outputs_topics$n_journals_2stage[1:n_topics] <- topic_counts$journal_counts[1:n_topics]
 journals_analysed <- c()
 
+# Some journals are omitted from two-stage analyses due to large standard errors
+outputs_select$OR_adj[outputs_select$sd_adj>2500] <- NA
+outputs_select$sd_adj[outputs_select$sd_adj>2500] <- NA
+
 # Run analyses
 for(i in 1:n_topics){
   cat("\n\n******** Analysing topic:",as.character(topic_counts$topic[i]),"********** \n\n")
@@ -258,8 +279,12 @@ for(i in 1:n_topics){
   outputs_topics[i,c("OR_1stage","ci.lb_1stage","ci.ub_1stage")] <- meta1_summ$conf.int[1,c(1,3,4)]
   
   cat("\n\n--- Adjusted for author seniority, one-stage:\n")
-  meta1_adj <- clogit(case ~ Gender +  ns(years_in_scopus_ptile,knots=knots) + 
-                        ns(h_index_ptile,knots=knots) + ns(n_pubs_ptile,knots=knots) + strata(pub_id), data = icc_topic_i)
+  meta1_adj <- clogit(case ~ Gender +  
+                        ns(years_in_scopus_ptile,knots=knots) + 
+                        ns(h_index_ptile,knots=knots) + 
+                        ns(n_pubs_ptile,knots=knots) + 
+                        strata(pub_id), 
+                      data = icc_topic_i)
   meta1_adj_summ <- summary(meta1_adj)
   print(meta1_adj_summ)
   outputs_topics[i,c("OR_adj_1stage","ci.lb_adj_1stage","ci.ub_adj_1stage")] <- meta1_adj_summ$conf.int[1,c(1,3,4)]
@@ -290,14 +315,14 @@ for(i in 1:n_topics){
 }
 
 # Sort by ASJC code
-outputs_topics <- outputs_topics[c(order(outputs_topics$ASJC[1:(nrow(outputs_topics)-1)]),nrow(outputs_topics)),]
+outputs_topics <- outputs_topics[order(outputs_topics$ASJC),]
 
 # Get rid of some bad results
 outputs_topics[outputs_topics$ci.lb_adj_2stage < 0.1,c("OR_adj_2stage","ci.lb_adj_2stage","ci.ub_adj_2stage")] <- NA
 
 # How many significant effects?
-cat(sum(outputs_topics$ci.ub_2stage < 1),"of",nrow(outputs_topics),"topic-specific ORs showed significant bias against women.")
-cat(sum(outputs_topics$ci.ub_adj_2stage < 1,na.rm=T),"of",sum(!is.na(outputs_topics$ci.ub_adj_2stage)),"topic-specific ORs showed significant bias against women.")
+cat(sum(outputs_topics$ci.ub_1stage < 1),"of",nrow(outputs_topics),"topic-specific ORs showed significant bias against women.")
+cat(sum(outputs_topics$ci.ub_adj_1stage < 1),"of",nrow(outputs_topics),"topic-specific fully adjusted ORs showed significant bias against women.")
 
 save(outputs_topics,file="./results/secondary_analyses.Rdata")
 
@@ -305,9 +330,10 @@ save(outputs_topics,file="./results/secondary_analyses.Rdata")
 
 load("./results/main_analyses.Rdata")
 load("./results/two_stage_analyses.Rdata")
+load("./results/secondary_analyses.Rdata")
 
 ## one-stage meta-analysis
-tablehead <- rbind(c("Topic","ASJC","Journals","Cases","OR (95%CI)","AOR (95%CI)"),
+tablehead <- rbind(c("Topic","ASJC","Journals","Cases","Model 1 OR (95%CI)","Model 2 OR (95%CI)"),
                    rep(NA,6)
                    )
 tablenum <- cbind(as.matrix(outputs_topics[,c("topic","ASJC","n_journals_1stage","n_cases_1stage")]),
@@ -348,7 +374,7 @@ uppers <- rbind(rep(NA,2),rep(NA,2),
 # make plot/table
 my_ticks <- c(1/4,1/2,1,2,4)
 attr(my_ticks,"labels") <- c("1/4","1/2","1","2","4")
-pdf(file="./results/forestplot_1stage.pdf",width=13,height=17)
+pdf(file="./results/forestplot_1stage.pdf",width=14,height=15)
 forestplot(tabletext,mean=means,lower=lowers,upper=uppers,
            is.summary=c(TRUE,TRUE,rep(FALSE,nrow(outputs_topics)),TRUE),
            align=c("l",rep("r",ncol(tabletext)-1)),
@@ -365,9 +391,8 @@ forestplot(tabletext,mean=means,lower=lowers,upper=uppers,
            grid=T,
            boxsize=0.3,
            fn.ci_norm = c(fpDrawDiamondCI, fpDrawCircleCI),
-           #fn.ci_sum=c(fpDrawDiamondCI, fpDrawCircleCI),
-           legend = c("Unadjusted OR", "Adjusted OR"),
-           legend_args = fpLegend(pos = list("topright")),
+           legend = c("Model 1 OR", "Model 2 OR"),
+           legend_args = fpLegend(pos = list("top")),
            new_page=F
 )
 dev.off()
@@ -409,7 +434,7 @@ uppers <- rbind(rep(NA,2),rep(NA,2),
 )
 
 # make plot/table
-pdf(file="./results/forestplot_2stage_sort.pdf",width=13,height=17)
+pdf(file="./results/forestplot_2stage.pdf",width=14,height=15)
 forestplot(tabletext,mean=means,lower=lowers,upper=uppers,
            is.summary=c(TRUE,TRUE,rep(FALSE,nrow(outputs_topics)),TRUE),
            align=c("l",rep("r",ncol(tabletext)-1)),
@@ -426,8 +451,8 @@ forestplot(tabletext,mean=means,lower=lowers,upper=uppers,
            grid=T,
            boxsize=0.3,
            fn.ci_norm = c(fpDrawDiamondCI, fpDrawCircleCI),
-           legend = c("Unadjusted OR", "Adjusted OR"),
-           legend_args = fpLegend(pos = list("topright")),
+           legend = c("Model 1 OR", "Model 2 OR"),
+           legend_args = fpLegend(pos = list("top")),
            new_page=F
 )
 dev.off()

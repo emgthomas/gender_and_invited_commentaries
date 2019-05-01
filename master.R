@@ -6,6 +6,7 @@
 setwd("/Users/emt380/Documents/PhD_Papers/Gender_bias/R_code/gender_bias_invited_commentary/")
 
 # Run files in appropriate order
+source("./code/functions.R")
 source("./code/data_cleaning.R")
 source("./code/descriptive_analyses.R")
 source("./code/main_analyses.R")
