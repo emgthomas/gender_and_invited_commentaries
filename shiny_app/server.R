@@ -4,7 +4,6 @@ library(dplyr)
 library(metafor)
 library(splines)
 
-# df <- readRDS( "/Users/emt380/Documents/PhD_Papers/Gender_bias/R_code/jama_paper/shiny_app/journal_ORs.rds")
 df <- readRDS( "journal_ORs.rds")
 
 shinyServer(

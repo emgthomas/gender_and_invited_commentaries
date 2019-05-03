@@ -2,7 +2,7 @@
 # ----------------------- Master file ---------------------- #
 # ---------------------------------------------------------- #
 
-# Set the working directory as appropriate on local computer
+# Set the working directory to the ~~root directory of the git repository~~
 setwd("/Users/emt380/Documents/PhD_Papers/Gender_bias/R_code/gender_bias_invited_commentary/")
 
 # Run files in appropriate order

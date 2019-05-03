@@ -7,7 +7,7 @@ Package dependencies: data.table (1.10.4.3), dplyr (0.7.6), gtools (3.5.0),  res
 The repository contains the following files:
 
 ## master.R
-This file will source all other files, thereby reproducing all figures and tables. Each .R file can also be run independently.
+This file will source all other files, thereby reproducing all figures and tables. To run this file, first *edit the working directory in master.R to point to the root of this git repository*. Each .R file can also be run independently.
 
 ## data_cleaning.R
 Produces datasets needed for analysis using raw data on authors (all case authors plus up to 50 controls per case) and intra-citing commentary articles. Produces a text file (../results/data_cleaning.txt) that reports numbers needed to reproduce Figure 1.

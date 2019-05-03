@@ -2,7 +2,7 @@
 
 This repository contains code and and data to reproduce all analyses, figures, and tables presented in the above manuscript. Data are de-identified. We provide the matched dataset. Code for performing matching is not provided; matching of cases and controls was performed internally at Elsevier.
 
-All analyses were performed in R version 3.4.2. Sourcing the file code/master.R will re-run all analyses and save all tables and figures in the results directory.
+All analyses were performed in R version 3.4.2. Sourcing the file code/master.R will re-run all analyses and save all tables and figures in the results directory, but first *edit the working directory in master.R to point to the root of this git repository*.
 
 The repository contains the following directories:
 
