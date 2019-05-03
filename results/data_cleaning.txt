@@ -1,0 +1,95 @@
+------- Flow chart Step 1 (Included)-------
+
+Number of included journals was determined in Scopus database (not shown here)
+
+------- Flow chart Step 1 (Excluded)-------
+
+Number of journals that did not contain ICC articles =  1474
+
+------- Flow chart Step 2 (Included)------- 
+
+Number of ICC articles =  101882
+
+------- Flow chart Step 2 (Excluded)------- 
+
+Number of ICC articles where corresponding/single author could not be identified =  29844
+
+------- Flow chart Step 3 (Included)------- 
+
+Number of ICC articles with corresponding/single author =  72038
+
+------- Flow chart Step 4 (Included)------- 
+
+Number of unique corresponding author-journal pairs (these will form cases) =  56939
+
+------- Flow chart Step 5 (Included)------- 
+
+Number of controls =  3468925
+
+Processing data for  2665 journals...
+
+[1] 100
+[1] 200
+[1] 300
+[1] 400
+[1] 500
+[1] 600
+[1] 700
+[1] 800
+[1] 900
+[1] 1000
+[1] 1100
+[1] 1200
+[1] 1300
+[1] 1400
+[1] 1500
+[1] 1600
+[1] 1700
+[1] 1800
+[1] 1900
+[1] 2000
+[1] 2100
+[1] 2200
+[1] 2300
+[1] 2400
+[1] 2500
+[1] 2600
+
+
+Done.
+
+
+
+------- Flow chart Step 5 (Excluded)------- 
+
+Number of controls excluded =  979722
+
+------- Flow chart Step 6 (Included)------- 
+
+Number of controls included after keeping only top 10 =  603153
+
+------- Flow chart Step 7 (Included)------- 
+
+Number of matched sets =  53663
+
+------- Flow chart Step 7 (Excluded)------- 
+
+Matched sets excluded due to missing gender =  7428
+
+------- Flow chart Step 8 (Included)------- 
+
+Matched sets with complete gender information =  46235
+
+------- Flow chart Step 9 (Included)------- 
+
+Number of journals in one-stage meta-analysis =  2549
+
+------- Flow chart Step 9 (Excluded)------- 
+
+Journals with insufficient data for journal-specific estimate =  1139
+
+------- Flow chart Step 10 (Included)------- 
+
+Journals with enough data for journal-specific estimate =  1410
+
+Number of matched sets in these journals =  43572

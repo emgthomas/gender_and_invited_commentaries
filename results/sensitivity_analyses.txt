@@ -1,0 +1,619 @@
+
+
+--------------------------------------------------------------------
+
+
+
+--------------------- Two-stage meta-analysis ----------------------
+
+
+
+--------------------------------------------------------------------
+
+********** Undjusted model ************
+
+--------------------------------------------------
+
+--------------------- Table S6 -------------------
+
+--------------------------------------------------
+
+---Summary of random effects meta-analysis for unadjusted model---
+
+
+Random-Effects Model (k = 1410; tau^2 estimator: REML)
+
+    logLik    deviance         AIC         BIC        AICc  
+-1539.0570   3078.1140   3082.1140   3092.6153   3082.1225  
+
+tau^2 (estimated amount of total heterogeneity): 0.0431 (SE = 0.0089)
+tau (square root of estimated tau^2 value):      0.2077
+I^2 (total heterogeneity / total variability):   15.56%
+H^2 (total variability / sampling variability):  1.18
+
+Test for Heterogeneity: 
+Q(df = 1409) = 1440.8078, p-val = 0.2718
+
+Model Results:
+
+estimate      se      zval    pval    ci.lb    ci.ub     
+ -0.2658  0.0161  -16.4817  <.0001  -0.2974  -0.2342  ***
+
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 
+
+
+
+---Mean and confidence (ci)/prediction (cr) intervals on odds ratio scale---
+
+ pred ci.lb ci.ub cr.lb cr.ub
+ 0.77  0.74  0.79  0.51  1.15
+
+
+---Meta-regression on journal citescore---
+
+Journal with outlier citescore of 89.23 : Ca-A Cancer Journal for Clinicians
+
+---Meta-regression on citescore, excluding one journal as outlier---
+
+
+Multivariate Meta-Analysis Model (k = 1409; method: REML)
+
+    logLik    Deviance         AIC         BIC        AICc  
+-1513.5188   3027.0376   3039.0376   3070.5201   3039.0978  
+
+Variance Components: 
+
+            estim    sqrt  nlvls  fixed   factor
+sigma^2    0.0329  0.1813   1409     no  journal
+
+Test for Residual Heterogeneity: 
+QE(df = 1404) = 1373.3771, p-val = 0.7155
+
+Test of Moderators (coefficient(s) 2:5): 
+QM(df = 4) = 48.6630, p-val < .0001
+
+Model Results:
+
+                                        estimate      se     zval    pval    ci.lb    ci.ub     
+intrcpt                                  -0.2376  0.0892  -2.6624  0.0078  -0.4125  -0.0627   **
+ns(citescore, knots = knot_placement)1   -0.0703  0.0875  -0.8034  0.4217  -0.2419   0.1012     
+ns(citescore, knots = knot_placement)2   -0.4530  0.1088  -4.1647  <.0001  -0.6661  -0.2398  ***
+ns(citescore, knots = knot_placement)3   -0.0225  0.2168  -0.1037  0.9174  -0.4473   0.4024     
+ns(citescore, knots = knot_placement)4    0.0024  0.1666   0.0146  0.9883  -0.3241   0.3290     
+
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 
+
+
+
+********** Adjusted model ************
+
+---Summary of random effects meta-analysis for unadjusted model---
+
+
+Random-Effects Model (k = 1196; tau^2 estimator: REML)
+
+    logLik    deviance         AIC         BIC        AICc  
+-1465.6362   2931.2724   2935.2724   2945.4442   2935.2825  
+
+tau^2 (estimated amount of total heterogeneity): 0.0151 (SE = 0.0068)
+tau (square root of estimated tau^2 value):      0.1227
+I^2 (total heterogeneity / total variability):   5.86%
+H^2 (total variability / sampling variability):  1.06
+
+Test for Heterogeneity: 
+Q(df = 1195) = 1152.2739, p-val = 0.8081
+
+Model Results:
+
+estimate      se      zval    pval    ci.lb    ci.ub     
+ -0.2279  0.0158  -14.4424  <.0001  -0.2588  -0.1969  ***
+
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 
+
+
+
+---Mean and confidence (ci)/prediction (cr) intervals on odds ratio scale---
+
+ pred ci.lb ci.ub cr.lb cr.ub
+ 0.80  0.77  0.82  0.62  1.01
+
+
+---Meta-regression on journal citescore---
+
+
+
+Meta-regression on citescore
+
+
+Multivariate Meta-Analysis Model (k = 1195; method: REML)
+
+    logLik    Deviance         AIC         BIC        AICc  
+-1457.3004   2914.6008   2926.6008   2957.0910   2926.6718  
+
+Variance Components: 
+
+            estim    sqrt  nlvls  fixed   factor
+sigma^2    0.0137  0.1170   1195     no  journal
+
+Test for Residual Heterogeneity: 
+QE(df = 1190) = 1138.5650, p-val = 0.8546
+
+Test of Moderators (coefficient(s) 2:5): 
+QM(df = 4) = 11.4139, p-val = 0.0223
+
+Model Results:
+
+                                        estimate      se     zval    pval    ci.lb    ci.ub     
+intrcpt                                  -0.4620  0.1043  -4.4312  <.0001  -0.6663  -0.2576  ***
+ns(citescore, knots = knot_placement)1    0.2048  0.1012   2.0241  0.0430   0.0065   0.4031    *
+ns(citescore, knots = knot_placement)2   -0.0086  0.1058  -0.0809  0.9355  -0.2160   0.1989     
+ns(citescore, knots = knot_placement)3    0.6516  0.2426   2.6863  0.0072   0.1762   1.1270   **
+ns(citescore, knots = knot_placement)4    0.3193  0.1556   2.0527  0.0401   0.0144   0.6242    *
+
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 
+
+
+
+********** Model with interaction ************
+
+---Summary of random effects meta-analysis for unadjusted model---
+
+
+Random-Effects Model (k = 1087; tau^2 estimator: REML)
+
+    logLik    deviance         AIC         BIC        AICc  
+-2273.2965   4546.5929   4550.5929   4560.5734   4550.6040  
+
+tau^2 (estimated amount of total heterogeneity): 0.0030 (SE = 0.0248)
+tau (square root of estimated tau^2 value):      0.0550
+I^2 (total heterogeneity / total variability):   0.26%
+H^2 (total variability / sampling variability):  1.00
+
+Test for Heterogeneity: 
+Q(df = 1086) = 981.2739, p-val = 0.9895
+
+Model Results:
+
+estimate      se     zval    pval    ci.lb   ci.ub   
+ -0.0275  0.0331  -0.8307  0.4062  -0.0922  0.0373   
+
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 
+
+
+
+---Mean and confidence (ci)/prediction (cr) intervals on odds ratio scale---
+
+ pred ci.lb ci.ub cr.lb cr.ub
+ 0.97  0.91  1.04  0.86  1.10
+---Summary of random effects meta-analysis for unadjusted model---
+
+
+Random-Effects Model (k = 1087; tau^2 estimator: REML)
+
+   logLik   deviance        AIC        BIC       AICc  
+-416.7980   833.5961   837.5961   847.5766   837.6072  
+
+tau^2 (estimated amount of total heterogeneity): 0.0009 (SE = 0.0008)
+tau (square root of estimated tau^2 value):      0.0302
+I^2 (total heterogeneity / total variability):   2.62%
+H^2 (total variability / sampling variability):  1.03
+
+Test for Heterogeneity: 
+Q(df = 1086) = 1036.5387, p-val = 0.8562
+
+Model Results:
+
+estimate      se     zval    pval    ci.lb    ci.ub     
+ -0.0318  0.0059  -5.4083  <.0001  -0.0434  -0.0203  ***
+
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 
+
+
+
+---Mean and confidence (ci)/prediction (cr) intervals on odds ratio scale---
+
+ pred ci.lb ci.ub cr.lb cr.ub
+ 0.97  0.96  0.98  0.91  1.03
+
+
+---------------------------------------------------------
+
+
+
+--------- Multiple imputation for missing data-----------
+
+
+
+---------------------------------------------------------
+
+--------------------------------------------------
+
+--------------------- Table S1 -------------------
+
+--------------------------------------------------
+
+-----------------Author-level variables for *unique* authors by gender, including those with missing gender----------------
+
+
+
+----Gender----
+
+
+ 
+   Cell Contents
+|-------------------------|
+|                       N |
+|           N / Col Total |
+|-------------------------|
+
+ 
+Total Observations in Table:  167705 
+
+ 
+                       | unique_authors2$Gender 
+unique_authors2$status |      male |    female |   unknown | Row Total | 
+-----------------------|-----------|-----------|-----------|-----------|
+                  Case |     10454 |      4265 |      2738 |     17457 | 
+                       |     0.120 |     0.095 |     0.078 |           | 
+-----------------------|-----------|-----------|-----------|-----------|
+               Control |     62359 |     35908 |     29455 |    127722 | 
+                       |     0.713 |     0.798 |     0.836 |           | 
+-----------------------|-----------|-----------|-----------|-----------|
+                  Both |     14641 |      4848 |      3037 |     22526 | 
+                       |     0.167 |     0.108 |     0.086 |           | 
+-----------------------|-----------|-----------|-----------|-----------|
+          Column Total |     87454 |     45021 |     35230 |    167705 | 
+                       |     0.521 |     0.268 |     0.210 |           | 
+-----------------------|-----------|-----------|-----------|-----------|
+
+ 
+
+
+----Asian country of origin----
+
+
+ 
+   Cell Contents
+|-------------------------|
+|                       N |
+|           N / Col Total |
+|-------------------------|
+
+ 
+Total Observations in Table:  167705 
+
+ 
+                                  | unique_authors2$Gender 
+unique_authors2$country_of_origin |      male |    female |   unknown | Row Total | 
+----------------------------------|-----------|-----------|-----------|-----------|
+                            Asian |     11527 |      3553 |     15743 |     30823 | 
+                                  |     0.132 |     0.079 |     0.447 |           | 
+----------------------------------|-----------|-----------|-----------|-----------|
+                        Not Asian |     75822 |     41414 |     19054 |    136290 | 
+                                  |     0.867 |     0.920 |     0.541 |           | 
+----------------------------------|-----------|-----------|-----------|-----------|
+                          Unknown |       105 |        54 |       433 |       592 | 
+                                  |     0.001 |     0.001 |     0.012 |           | 
+----------------------------------|-----------|-----------|-----------|-----------|
+                     Column Total |     87454 |     45021 |     35230 |    167705 | 
+                                  |     0.521 |     0.268 |     0.210 |           | 
+----------------------------------|-----------|-----------|-----------|-----------|
+
+ 
+
+
+----Quartiles of years since first publication----
+
+$male
+25% 50% 75% 
+ 13  21  30 
+
+$female
+25% 50% 75% 
+ 10  16  24 
+
+$unknown
+25% 50% 75% 
+ 10  15  23 
+
+
+All:
+
+25% 50% 75% 
+ 11  18  27 
+
+
+----Number of publications----
+
+$male
+25% 50% 75% 
+ 41  84 165 
+
+$female
+25% 50% 75% 
+ 26  49  93 
+
+$unknown
+25% 50% 75% 
+ 29  58 116 
+
+
+All:
+
+25% 50% 75% 
+ 33  66 134 
+
+
+----H-Index----
+
+$male
+25% 50% 75% 
+ 12  21  36 
+
+$female
+25% 50% 75% 
+  9  15  26 
+
+$unknown
+25% 50% 75% 
+  9  15  25 
+
+
+All:
+
+25% 50% 75% 
+ 10  18  31 
+-----------------Multiple imputation analysis----------------
+
+npt = 3 , n =  1 
+rhobeg =  0.2 , rhoend =  2e-07 
+start par. =  1 fn =  464392.4 
+rho:    0.020 eval:   3 fn:      462995. par:0.800000 
+rho:   0.0020 eval:   6 fn:      462945. par:0.758554 
+rho:  0.00020 eval:   8 fn:      462945. par:0.756554 
+rho:  2.0e-05 eval:  10 fn:      462945. par:0.757538 
+rho:  2.0e-06 eval:  11 fn:      462945. par:0.757538 
+rho:  2.0e-07 eval:  13 fn:      462945. par:0.757538 
+At return
+eval:  16 fn:      462945.29 par: 0.757537
+Generalized linear mixed model fit by maximum likelihood (Adaptive Gauss-Hermite Quadrature, nAGQ = 0) ['glmerMod']
+ Family: binomial  ( logit )
+Formula: gender ~ case + case_years_in_scopus + case_h_index + case_n_pubs +  
+    asia + ns(years_in_scopus_ptile, knots = knots) + ns(h_index_ptile,  
+    knots = knots) + ns(n_pubs_ptile, knots = knots) + (1 | pub_id)
+   Data: icc_df_to_impute
+
+      AIC       BIC    logLik  deviance  df.resid 
+ 462983.3  463191.4 -231472.6  462945.3    421241 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-2.3252 -0.6140 -0.4142  0.8271  5.5793 
+
+Random effects:
+ Groups Name        Variance Std.Dev.
+ pub_id (Intercept) 0.5739   0.7575  
+Number of obs: 421260, groups:  pub_id, 53581
+
+Fixed effects:
+                                           Estimate Std. Error z value Pr(>|z|)    
+(Intercept)                               -0.032695   0.021120   -1.55  0.12160    
+case                                      -0.090961   0.032766   -2.78  0.00550 ** 
+case_years_in_scopus                      -0.008716   0.006722   -1.30  0.19476    
+case_h_index                               0.030658   0.011378    2.69  0.00705 ** 
+case_n_pubs                               -0.053315   0.011353   -4.70 2.65e-06 ***
+asia                                      -0.563341   0.014800  -38.06  < 2e-16 ***
+ns(years_in_scopus_ptile, knots = knots)1  0.220663   0.023231    9.50  < 2e-16 ***
+ns(years_in_scopus_ptile, knots = knots)2  0.147888   0.022617    6.54 6.21e-11 ***
+ns(years_in_scopus_ptile, knots = knots)3 -0.034503   0.046738   -0.74  0.46039    
+ns(years_in_scopus_ptile, knots = knots)4 -0.280891   0.022371  -12.56  < 2e-16 ***
+ns(h_index_ptile, knots = knots)1          0.757086   0.032156   23.54  < 2e-16 ***
+ns(h_index_ptile, knots = knots)2          1.015761   0.031793   31.95  < 2e-16 ***
+ns(h_index_ptile, knots = knots)3          1.867952   0.063538   29.40  < 2e-16 ***
+ns(h_index_ptile, knots = knots)4          1.264283   0.035846   35.27  < 2e-16 ***
+ns(n_pubs_ptile, knots = knots)1          -1.629989   0.032198  -50.62  < 2e-16 ***
+ns(n_pubs_ptile, knots = knots)2          -1.581607   0.031164  -50.75  < 2e-16 ***
+ns(n_pubs_ptile, knots = knots)3          -3.570267   0.064610  -55.26  < 2e-16 ***
+ns(n_pubs_ptile, knots = knots)4          -3.193495   0.034571  -92.37  < 2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+--------------------------------------------------
+
+--------------------- Table S7 -------------------
+
+--------------------------------------------------
+
+
+
+-- Unadjusted results after multiple imputation --
+
+       OR     ci.lb     ci.ub   p.value 
+0.6809931 0.6656566 0.6966830 0.0000000 
+
+
+-- Adjusted results after multiple imputation --
+
+                                                 OR     ci.lb     ci.ub      p.value
+gender                                    0.7578828 0.7397971 0.7764107 0.000000e+00
+ns(years_in_scopus_ptile, knots = knots)1 1.4274844 1.3340414 1.5274727 0.000000e+00
+ns(years_in_scopus_ptile, knots = knots)2 1.4017431 1.3204578 1.4880322 0.000000e+00
+ns(years_in_scopus_ptile, knots = knots)3 2.3152348 2.0074523 2.6702064 0.000000e+00
+ns(years_in_scopus_ptile, knots = knots)4 2.0513119 1.9499386 2.1579553 0.000000e+00
+ns(h_index_ptile, knots = knots)1         1.3723991 1.2528937 1.5033033 9.738432e-12
+ns(h_index_ptile, knots = knots)2         2.0192444 1.8570996 2.1955462 0.000000e+00
+ns(h_index_ptile, knots = knots)3         4.3818093 3.6372151 5.2788335 0.000000e+00
+ns(h_index_ptile, knots = knots)4         6.1174403 5.6112972 6.6692378 0.000000e+00
+ns(n_pubs_ptile, knots = knots)1          1.3213548 1.1984343 1.4568829 2.224561e-08
+ns(n_pubs_ptile, knots = knots)2          0.9957804 0.9131376 1.0859026 9.237907e-01
+ns(n_pubs_ptile, knots = knots)3          0.7831245 0.6400333 0.9582064 1.756298e-02
+ns(n_pubs_ptile, knots = knots)4          0.2566806 0.2355091 0.2797554 0.000000e+00
+
+
+-- Adjusted results with interaction after multiple imputation --
+
+                                                 OR     ci.lb     ci.ub      p.value
+gender                                    0.8702270 0.8272975 0.9153841 7.232988e-08
+ns(years_in_scopus_ptile, knots = knots)1 1.4951945 1.3947876 1.6028293 0.000000e+00
+ns(years_in_scopus_ptile, knots = knots)2 1.4889183 1.3981048 1.5856307 0.000000e+00
+ns(years_in_scopus_ptile, knots = knots)3 2.5314485 2.1880832 2.9286964 0.000000e+00
+ns(years_in_scopus_ptile, knots = knots)4 2.1727275 2.0584251 2.2933771 0.000000e+00
+ns(h_index_ptile, knots = knots)1         1.3539374 1.2359589 1.4831776 7.304113e-11
+ns(h_index_ptile, knots = knots)2         1.9993823 1.8387888 2.1740014 0.000000e+00
+ns(h_index_ptile, knots = knots)3         4.2794947 3.5521295 5.1558016 0.000000e+00
+ns(h_index_ptile, knots = knots)4         6.0896930 5.5857607 6.6390886 0.000000e+00
+ns(n_pubs_ptile, knots = knots)1          1.3674652 1.2393679 1.5088022 4.478633e-10
+ns(n_pubs_ptile, knots = knots)2          1.0271969 0.9413555 1.1208660 5.467281e-01
+ns(n_pubs_ptile, knots = knots)3          0.8270772 0.6753980 1.0128200 6.624537e-02
+ns(n_pubs_ptile, knots = knots)4          0.2576939 0.2364203 0.2808817 0.000000e+00
+gender:years_in_scopus_ptile              0.9747991 0.9669240 0.9827385 6.948833e-10
+
+
+--------------------------------------------------------------------------------------
+
+
+
+------------- De-duplicating case authors present in multiple journals ---------------
+
+
+
+-------------------- and stricter match criteria for controls ------------------------
+
+
+
+--------------------------------------------------------------------------------------
+
+--------------------------------------------------
+
+--------------------- Table S8 -------------------
+
+--------------------------------------------------
+
+
+
+---Unadjusted analysis---
+Call:
+coxph(formula = Surv(rep(1, 90296L), case) ~ Gender + strata(pub_id), 
+    data = icc_df_dedup, method = "exact")
+
+  n= 90296, number of events= 34047 
+
+                 coef exp(coef) se(coef)      z Pr(>|z|)    
+Genderfemale -0.26430   0.76774  0.01668 -15.85   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+             exp(coef) exp(-coef) lower .95 upper .95
+Genderfemale    0.7677      1.303    0.7431    0.7933
+
+Rsquare= 0.003   (max possible= 0.511 )
+Likelihood ratio test= 254.6  on 1 df,   p=0
+Wald test            = 251.2  on 1 df,   p=0
+Score (logrank) test = 252.3  on 1 df,   p=0
+
+
+
+---Adjusted for measures of seniority using natural cubic splines---
+Call:
+coxph(formula = Surv(rep(1, 90296L), case) ~ Gender + ns(years_in_scopus_ptile, 
+    knots = knots) + ns(h_index_ptile, knots = knots) + ns(n_pubs_ptile, 
+    knots = knots) + strata(pub_id), data = icc_df_dedup, method = "exact")
+
+  n= 90233, number of events= 34047 
+   (63 observations deleted due to missingness)
+
+                                              coef exp(coef) se(coef)       z Pr(>|z|)    
+Genderfemale                              -0.23475   0.79077  0.01759 -13.344  < 2e-16 ***
+ns(years_in_scopus_ptile, knots = knots)1  0.47450   1.60721  0.04914   9.656  < 2e-16 ***
+ns(years_in_scopus_ptile, knots = knots)2  0.53281   1.70371  0.04551  11.707  < 2e-16 ***
+ns(years_in_scopus_ptile, knots = knots)3  1.17346   3.23317  0.10183  11.524  < 2e-16 ***
+ns(years_in_scopus_ptile, knots = knots)4  0.98544   2.67899  0.04144  23.782  < 2e-16 ***
+ns(h_index_ptile, knots = knots)1         -0.18057   0.83479  0.06874  -2.627  0.00862 ** 
+ns(h_index_ptile, knots = knots)2          0.27172   1.31222  0.06655   4.083 4.45e-05 ***
+ns(h_index_ptile, knots = knots)3          0.38801   1.47405  0.13983   2.775  0.00552 ** 
+ns(h_index_ptile, knots = knots)4          0.90428   2.47015  0.07407  12.208  < 2e-16 ***
+ns(n_pubs_ptile, knots = knots)1           0.49174   1.63517  0.06967   7.058 1.68e-12 ***
+ns(n_pubs_ptile, knots = knots)2           0.20000   1.22140  0.06551   3.053  0.00227 ** 
+ns(n_pubs_ptile, knots = knots)3           0.08580   1.08959  0.14348   0.598  0.54984    
+ns(n_pubs_ptile, knots = knots)4          -1.49051   0.22526  0.07163 -20.808  < 2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+                                          exp(coef) exp(-coef) lower .95 upper .95
+Genderfemale                                 0.7908     1.2646    0.7640    0.8185
+ns(years_in_scopus_ptile, knots = knots)1    1.6072     0.6222    1.4596    1.7697
+ns(years_in_scopus_ptile, knots = knots)2    1.7037     0.5870    1.5583    1.8627
+ns(years_in_scopus_ptile, knots = knots)3    3.2332     0.3093    2.6482    3.9473
+ns(years_in_scopus_ptile, knots = knots)4    2.6790     0.3733    2.4700    2.9056
+ns(h_index_ptile, knots = knots)1            0.8348     1.1979    0.7296    0.9552
+ns(h_index_ptile, knots = knots)2            1.3122     0.7621    1.1517    1.4951
+ns(h_index_ptile, knots = knots)3            1.4740     0.6784    1.1207    1.9388
+ns(h_index_ptile, knots = knots)4            2.4702     0.4048    2.1364    2.8561
+ns(n_pubs_ptile, knots = knots)1             1.6352     0.6116    1.4265    1.8744
+ns(n_pubs_ptile, knots = knots)2             1.2214     0.8187    1.0742    1.3887
+ns(n_pubs_ptile, knots = knots)3             1.0896     0.9178    0.8225    1.4434
+ns(n_pubs_ptile, knots = knots)4             0.2253     4.4393    0.1958    0.2592
+
+Rsquare= 0.026   (max possible= 0.511 )
+Likelihood ratio test= 2392  on 13 df,   p=0
+Wald test            = 2224  on 13 df,   p=0
+Score (logrank) test = 2331  on 13 df,   p=0
+
+
+
+---Including interaction term between gender and years active---
+Call:
+coxph(formula = Surv(rep(1, 90296L), case) ~ Gender + years_in_scopus_ptile:factor(Gender, 
+    levels = c("female", "male")) + ns(years_in_scopus_ptile, 
+    knots = knots) + ns(h_index_ptile, knots = knots) + ns(n_pubs_ptile, 
+    knots = knots) + strata(pub_id), data = icc_df_dedup, method = "exact")
+
+  n= 90233, number of events= 34047 
+   (63 observations deleted due to missingness)
+
+                                                                              coef exp(coef)  se(coef)       z Pr(>|z|)    
+Genderfemale                                                             -0.070355  0.932062  0.035351  -1.990 0.046567 *  
+ns(years_in_scopus_ptile, knots = knots)1                                 0.528813  1.696918  0.050247  10.524  < 2e-16 ***
+ns(years_in_scopus_ptile, knots = knots)2                                 0.605918  1.832934  0.047599  12.730  < 2e-16 ***
+ns(years_in_scopus_ptile, knots = knots)3                                 1.278732  3.592082  0.103810  12.318  < 2e-16 ***
+ns(years_in_scopus_ptile, knots = knots)4                                 1.054988  2.871940  0.043501  24.252  < 2e-16 ***
+ns(h_index_ptile, knots = knots)1                                        -0.193760  0.823855  0.068777  -2.817 0.004844 ** 
+ns(h_index_ptile, knots = knots)2                                         0.262397  1.300043  0.066587   3.941 8.12e-05 ***
+ns(h_index_ptile, knots = knots)3                                         0.367410  1.443990  0.139872   2.627 0.008620 ** 
+ns(h_index_ptile, knots = knots)4                                         0.900906  2.461833  0.074115  12.156  < 2e-16 ***
+ns(n_pubs_ptile, knots = knots)1                                          0.528392  1.696203  0.070028   7.545 4.51e-14 ***
+ns(n_pubs_ptile, knots = knots)2                                          0.232896  1.262250  0.065841   3.537 0.000404 ***
+ns(n_pubs_ptile, knots = knots)3                                          0.144273  1.155200  0.143925   1.002 0.316140    
+ns(n_pubs_ptile, knots = knots)4                                         -1.493332  0.224623  0.071707 -20.825  < 2e-16 ***
+years_in_scopus_ptile:factor(Gender, levels = c("female", "male"))female -0.032198  0.968315  0.006021  -5.347 8.93e-08 ***
+years_in_scopus_ptile:factor(Gender, levels = c("female", "male"))male          NA        NA  0.000000      NA       NA    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+                                                                         exp(coef) exp(-coef) lower .95 upper .95
+Genderfemale                                                                0.9321     1.0729    0.8697    0.9989
+ns(years_in_scopus_ptile, knots = knots)1                                   1.6969     0.5893    1.5378    1.8725
+ns(years_in_scopus_ptile, knots = knots)2                                   1.8329     0.5456    1.6697    2.0122
+ns(years_in_scopus_ptile, knots = knots)3                                   3.5921     0.2784    2.9308    4.4026
+ns(years_in_scopus_ptile, knots = knots)4                                   2.8719     0.3482    2.6372    3.1275
+ns(h_index_ptile, knots = knots)1                                           0.8239     1.2138    0.7200    0.9427
+ns(h_index_ptile, knots = knots)2                                           1.3000     0.7692    1.1410    1.4813
+ns(h_index_ptile, knots = knots)3                                           1.4440     0.6925    1.0978    1.8994
+ns(h_index_ptile, knots = knots)4                                           2.4618     0.4062    2.1290    2.8467
+ns(n_pubs_ptile, knots = knots)1                                            1.6962     0.5896    1.4787    1.9457
+ns(n_pubs_ptile, knots = knots)2                                            1.2622     0.7922    1.1094    1.4361
+ns(n_pubs_ptile, knots = knots)3                                            1.1552     0.8657    0.8713    1.5317
+ns(n_pubs_ptile, knots = knots)4                                            0.2246     4.4519    0.1952    0.2585
+years_in_scopus_ptile:factor(Gender, levels = c("female", "male"))female    0.9683     1.0327    0.9570    0.9798
+years_in_scopus_ptile:factor(Gender, levels = c("female", "male"))male          NA         NA        NA        NA
+
+Rsquare= 0.026   (max possible= 0.511 )
+Likelihood ratio test= 2421  on 14 df,   p=0
+Wald test            = 2254  on 14 df,   p=0
+Score (logrank) test = 2364  on 14 df,   p=0
+

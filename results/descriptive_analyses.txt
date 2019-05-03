@@ -1,0 +1,260 @@
+--------------------------------------------------
+
+--------------------- Table 1 --------------------
+
+--------------------------------------------------
+
+-----------------Author-level variables for *unique* authors included in analysis----------------
+
+
+
+----Gender----
+
+
+ 
+   Cell Contents
+|-------------------------|
+|                       N |
+|           N / Col Total |
+|-------------------------|
+
+ 
+Total Observations in Table:  123669 
+
+ 
+                       | unique_authors2$status 
+unique_authors2$Gender |      Case |   Control |      Both | Row Total | 
+-----------------------|-----------|-----------|-----------|-----------|
+                  male |     10975 |     56829 |     14000 |     81804 | 
+                       |     0.711 |     0.634 |     0.752 |           | 
+-----------------------|-----------|-----------|-----------|-----------|
+                female |      4463 |     32793 |      4609 |     41865 | 
+                       |     0.289 |     0.366 |     0.248 |           | 
+-----------------------|-----------|-----------|-----------|-----------|
+          Column Total |     15438 |     89622 |     18609 |    123669 | 
+                       |     0.125 |     0.725 |     0.150 |           | 
+-----------------------|-----------|-----------|-----------|-----------|
+
+ 
+
+
+----Quartiles of years since first publication----
+
+$Case
+25% 50% 75% 
+ 14  22  32 
+
+$Control
+25% 50% 75% 
+ 11  17  27 
+
+$Both
+25% 50% 75% 
+ 16  24  33 
+
+
+All:
+
+25% 50% 75% 
+ 12  19  28 
+
+
+----Number of publications----
+
+$Case
+25% 50% 75% 
+ 41  77 142 
+
+$Control
+25% 50% 75% 
+ 30  60 119 
+
+$Both
+25% 50% 75% 
+ 81 147 257 
+
+
+All:
+
+25% 50% 75% 
+ 35  71 142 
+
+
+----H-Index----
+
+$Case
+25% 50% 75% 
+ 12  22  36 
+
+$Control
+25% 50% 75% 
+ 10  17  29 
+
+$Both
+25% 50% 75% 
+ 21  33  50 
+
+
+All:
+
+25% 50% 75% 
+ 11  19  33 
+
+
+------------------------------------------------------
+
+--------------------- Other stats --------------------
+
+------------------------------------------------------
+
+
+
+-----------------Gender distribution of ICC authors----------------
+
+
+ 
+   Cell Contents
+|-------------------------|
+|                       N |
+|         N / Table Total |
+|-------------------------|
+
+ 
+Total Observations in Table:  72038 
+
+ 
+          |    female |      male |   unknown | 
+          |-----------|-----------|-----------|
+          |     14140 |     48427 |      9471 | 
+          |     0.196 |     0.672 |     0.131 | 
+          |-----------|-----------|-----------|
+
+
+
+ 
+
+
+---Number of female authors for all ICCs, excluding unknown gender---
+
+
+ 
+   Cell Contents
+|-------------------------|
+|                       N |
+|         N / Table Total |
+|-------------------------|
+
+ 
+Total Observations in Table:  62567 
+
+ 
+          |    female |      male | 
+          |-----------|-----------|
+          |     14140 |     48427 | 
+          |     0.226 |     0.774 | 
+          |-----------|-----------|
+
+
+
+ 
+
+
+-----------------Number of female authors among unique case authors, excluding unknown gender----------------
+
+
+ 
+   Cell Contents
+|-------------------------|
+|                       N |
+|         N / Table Total |
+|-------------------------|
+
+ 
+Total Observations in Table:  34047 
+
+ 
+          |      male |    female | 
+          |-----------|-----------|
+          |     24975 |      9072 | 
+          |     0.734 |     0.266 | 
+          |-----------|-----------|
+
+
+
+ 
+
+
+---Proportion of cases who authored ICCs in multiple journals, by gender---
+
+     male    female 
+0.2509309 0.1602734 
+
+
+All
+[1] 0.2267748
+[1] 7721
+
+
+-----------------Gender of controls by gender of case, excluding unknown gender----------------
+
+
+
+---Number of matched sets with female cases---
+
+[1] 11047
+
+
+---Average number of female controls for female cases---
+
+[1] 0.3996739
+
+
+---Number of matched sets with male cases---
+
+[1] 35188
+
+
+---Average number of female controls for male cases---
+
+[1] 0.2712377
+
+
+-----------------Number of controls per case included in analysis----------------
+
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  1.000   5.000   8.000   7.116   9.000  10.000 
+
+
+---Summary of number of journals, by gender---
+$male
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  1.000   1.000   1.000   1.409   2.000  22.000 
+
+$female
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  1.000   1.000   1.000   1.218   1.000  10.000 
+
+
+
+All
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  1.000   1.000   1.000   1.358   1.000  22.000 
+
+
+-----------------Correlation of years active, h-index and number of pubs----------------
+
+
+
+---Years in scopus percentile vs. h-index percentile---
+
+[1] 0.7176961
+
+
+---Years in scopus percentile vs. number of pubs percentile---
+
+[1] 0.7029631
+
+
+---H-index percentile vs. number of pubs percentile---
+
+[1] 0.9111936

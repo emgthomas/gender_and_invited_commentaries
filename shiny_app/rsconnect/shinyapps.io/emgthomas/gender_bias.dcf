@@ -1,0 +1,12 @@
+name: gender_bias
+title: gender_bias
+username:
+account: emgthomas
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 725581
+bundleId: 2033878
+url: https://emgthomas.shinyapps.io/gender_bias/
+when: 1556055379.9528
+asMultiple: FALSE
+asStatic: FALSE
