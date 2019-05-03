@@ -54,6 +54,7 @@ cases <- authors3[authors3$case==1,] # separate out cases
 controls.keep <- logical(length=nrow(controls))
 cases.keep <- logical(length=nrow(cases))
 i <- 0
+cat("\n\nProcessing data for ",length(unique(controls$pub_sourceid)),"journals...\n\n")
 for(pub in unique(controls$pub_sourceid)){
   i <- i+1
   which_controls <- controls$pub_sourceid == pub
@@ -62,14 +63,14 @@ for(pub in unique(controls$pub_sourceid)){
   controls.keep[which_controls] <- !(controls$auth_id[which_controls] %in% unique(cases$auth_id[which_cases]))
   # within journals, remove any duplicate cases
   cases.keep[which_cases] <- !duplicated(cases$auth_id[which_cases])
-  #if((i %% 100)==0) print(i)
+  if((i %% 100)==0) print(i)
 }
+cat("\n\nDone.\n\n")
 # put cases and controls back together
 authors4 <- rbind(cases[cases.keep,],controls[controls.keep,])
 
 cat("\n\n------- Flow chart Step 5 (Excluded)------- \n\n")
 cat("Number of controls excluded = ",sum(1-authors2$case) - sum(1-authors4$case))
-#cat("Number of unique control authors excluded = ",length(unique(authors2$auth_id[authors2$case==0]))-length(unique(authors4$auth_id[authors4$case==0])))
 
 # Keep only top 10 controls
 authors5 <- authors4 %>%
@@ -109,16 +110,6 @@ authors6$match_quantile <- numeric(length=nrow(authors6)) + NA
 authors6$match_quantile[authors6$case==0] <- quantcut(authors6$Match_Score[authors6$case==0],q=10)
 # set "quantile" to 11 for cases, so they will always be included
 authors6$match_quantile[authors6$case==1] <- 11
-
-# # Which controls are also focal article authors
-# controls_focal <- read.csv(file="./data/Control_Equals_Cited.csv")
-# controls_focal$focal_author <- 1
-# controls_focal <- controls_focal[!duplicated(controls_focal[,c("Cited_Author","Publication")]),]
-# controls_focal <- subset(controls_focal,Cited_Author %in% unique(authors$AuthorID))
-# authors <- merge(authors,controls_focal[,c("Cited_Author","Publication","focal_author")],
-#                  by.x=c("AuthorID","Publication"),by.y=c("Cited_Author","Publication"),
-#                  all.x=T)
-# authors$focal_author[is.na(authors$focal_author) & authors$case ==0] <- 0
 
 ### put this together in final dataset
 # "icc" stands for "intra-citing commentary"
@@ -172,8 +163,8 @@ cat("\n\n------- Flow chart Step 9 (Excluded)------- \n\n")
 cat("Journals with insufficient data for journal-specific estimate = ",length(included.journals$include.journal) - sum(included.journals$include.journal))
 
 cat("\n\n------- Flow chart Step 10 (Included)------- \n\n")
-cat("Journals included in two-stage meta-analysis = ",sum(included.journals$include.journal))
-cat("\n\nMatched included in two-stage meta-analysis = ",sum(icc_df$case[icc_df$include.journal]))
+cat("Journals with enough data for journal-specific estimate = ",sum(included.journals$include.journal))
+cat("\n\nNumber of matched sets in these journals = ",sum(icc_df$case[icc_df$include.journal]))
 
 # Create factor variables
 icc_df$Gender <- factor(icc_df$Gender, levels=c("male","female"))
@@ -225,23 +216,8 @@ n_pubs <- n_pubs[!duplicated(n_pubs),]
 n_pubs$n_pubs_ptile <- percent_rank(n_pubs$Total_Publications_In_Scopus)/0.1
 icc_df_all <- merge(icc_df_all,n_pubs[,c("auth_id","n_pubs_ptile")],by="auth_id",all.x=T,all.y=F)
 
-#### Merge in author country data ####
-country <- readRDS("./data/author_countries_raw.rds")
-country$country <- as.character(country$country)
-# UNSD country codes, downloaded April 23, 2019 from https://unstats.un.org/unsd/methodology/m49/overview/ 
-country_codes <- read.csv("./data/UNSD_country_codes.csv")
-# change three letter country code to lower case
-country_codes$country <- tolower(country_codes$ISO.alpha3.Code)
-country_codes <- country_codes[country_codes$country != "",c("country","Region.Name")]
-# Merge in
-country <- merge(country,country_codes,by="country",all.x=T,all.y=F)
-# Do some manually
-asian_countries_missed <- c("hkg","twn") # Hong Kong, Taiwan
-country$Region.Name[country$country %in% asian_countries_missed] <- "Asia"
-country$Asia <- country$Region.Name == "Asia"
-# Which authors published in an Asian country at least once in their first year?
-authors_asian <- tapply(country$Asia,as.character(country$auth_id),sum,na.rm=T)
-authors_asian <- data.frame(auth_id=names(authors_asian),asia=as.integer(authors_asian>=1))
+#### Merge in Asian origin data ####
+authors_asian <- readRDS("./data/authors_asian.rds")
 # merge into authors dataset
 icc_df_all <- merge(icc_df_all,authors_asian,by="auth_id",all.x=T,all.y=F)
 

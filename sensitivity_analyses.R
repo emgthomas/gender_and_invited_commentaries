@@ -11,11 +11,16 @@ require(survival)
 require(splines)
 require(metafor)
 require(dplyr)
-require(ggplot2)
 require(plotly)
 require(reshape2)
 require(lme4)
 require(mice)
+require(RColorBrewer)
+require(gmodels)
+
+# some colors
+cols1 <- brewer.pal(9,name="BuGn")
+cols2 <- brewer.pal(9,name="Oranges")
 
 cat("\n\n--------------------------------------------------------------------\n\n")
 cat("\n\n--------------------- Two-stage meta-analysis ----------------------\n\n")
@@ -32,6 +37,10 @@ outputs_select <- readRDS("./shiny_app/journal_ORs.rds")
 # cat("\n\n---Mean and confidence (ci)/prediction (cr) intervals on odds ratio scale---\n\n")
 # predict(all_2stage, transf=exp, digits=2)
 
+cat("--------------------------------------------------\n\n")
+cat("--------------------- Table S6 -------------------\n\n")
+cat("--------------------------------------------------\n\n")
+
 # Meta-analysis for unadjusted model
 all_2stage <- rma(effect,sd^2,data=outputs_select)
 cat("---Summary of random effects meta-analysis for unadjusted model---\n\n")
@@ -44,7 +53,7 @@ cat("\n\n---Meta-regression on journal citescore---\n\n")
 # exclude one journal with high outlier citescore
 outputs_select2 <- subset(outputs_select,citescore<20)
 cat("Journal with outlier citescore of",max(outputs_select$citescore),":",
-    outputs_select$sourcetitle[outputs_select$citescore>20])
+    as.character(outputs_select$sourcetitle[outputs_select$citescore>20]))
 
 # define knots
 n_knots <- 3 # number of *internal* knots
@@ -68,9 +77,9 @@ plot_citescore <- plot_citescore[,c("pred","ci.lb","ci.ub","cr.lb","cr.ub")]
 plot_citescore$citescore <- citescore_newmods
 
 # Plot
-cols1 <- brewer.pal(9,name="BuGn")
-cols2 <- brewer.pal(9,name="Oranges")
-OR_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~OR,height=600,width=1000, type="scatter") %>%
+OR_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~OR,
+                   height=600,width=1000, type="scatter",mode="none",
+                   name=" ") %>%
   # add horizontal line for null value
   add_trace(x = c(0,18), y= c(1,1), mode = "lines", color=I("black"),
             showlegend=F) %>%
@@ -81,7 +90,7 @@ OR_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~OR,he
             hoverinfo='none',
             alpha=0.8,
             color=I(cols1[4]),
-            name="Journal-specific odds ratio"
+            name="Journal-specific OR estimate"
   )  %>%
   # annotations
   add_trace(x = 16, y = 5, mode="text",text="Favors women",
@@ -104,7 +113,7 @@ OR_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~OR,he
             hoverinfo="none",
             color=I(cols2[5]),
             # line=list(color=I(cols2[1])),
-            name="Predicted odds ratio") %>%
+            name="Estimated OR as function\nof Cite Score") %>%
   # layout
   layout(yaxis = list(title="Odds Ratio (log scale)",range=c(-log(2.2),log(2.2)),type="log",
                       tickvals=c(1/4,1/2,1,2,4,8),
@@ -116,7 +125,7 @@ OR_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~OR,he
   )
 
 # Save as pdf
-export(OR_plot, "./results/OR_citescore_metareg.pdf")
+export(OR_plot, "./results/figure_S7a.pdf")
 
 cat("\n\n********** Adjusted model ************\n\n")
 
@@ -143,15 +152,13 @@ save(all_2stage,all_2stage_adj,file="./results/two_stage_analyses.Rdata")
 
 # Meta-regression by citescore
 cat("\n\n---Meta-regression on journal citescore---\n\n")
+outputs_select2$OR_adj[outputs_select2$sd_adj>2500] <- NA
+outputs_select2$sd_adj[outputs_select2$sd_adj>2500] <- NA
 meta_analysis_cs_adj <- rma.mv(effect_adj,sd_adj^2,random=~1|journal,
                            mods= ~ ns(citescore,knots=knot_placement),
                            data=subset(outputs_select2,!is.na(outputs_select2$effect_adj)))
 cat("\n\nMeta-regression on citescore\n\n")
 summary(meta_analysis_cs_adj)
-
-cat("\n\n---Sub-group analyses by journal topic---\n\n")
-cat("See secondary_analyses.R (for ease of coding, sub-group analyses using one-stage 
-and two-stage meta-analysis are performed together)\n\n")
 
 ###### Plot of journal-specific ORs with meta-regression on citescore ######
 plot_citescore_adj <- predict(meta_analysis_cs_adj,newmods=citescore_bs[1:nrow(citescore_bs),1:ncol(citescore_bs)],
@@ -159,7 +166,9 @@ plot_citescore_adj <- predict(meta_analysis_cs_adj,newmods=citescore_bs[1:nrow(c
 plot_citescore_adj <- plot_citescore_adj[,c("pred","ci.lb","ci.ub","cr.lb","cr.ub")]
 plot_citescore_adj$citescore <- citescore_newmods
 
-OR_adj_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~OR_adj,height=600,width=1000, type="scatter") %>%
+OR_adj_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~OR_adj,
+                       height=600,width=1000, type="scatter", mode="none",
+                       name=" ") %>%
   # add horizontal line for null value
   add_trace(x = c(0,18), y= c(1,1), mode = "lines", color=I("black"),
             showlegend=F) %>%
@@ -170,7 +179,7 @@ OR_adj_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~O
             hoverinfo='none',
             color=I(cols1[4]),
             alpha=0.8,
-            name="Journal-specific odds ratio"
+            name="Journal-specific OR estimate"
   )  %>%
   # annotations
   add_trace(x = 16, y = 5, mode="text",text="Favors women",
@@ -192,7 +201,7 @@ OR_adj_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~O
   add_lines(y=plot_citescore_adj$pred, x=plot_citescore_adj$citescore,
             hoverinfo="none",
             color=I(cols2[5]),
-            name="Predicted odds ratio")%>%
+            name="Estimated OR as function\nof Cite Score")%>%
   # layout
   layout(yaxis = list(title="Odds Ratio (log scale)",range=c(-log(2.2),log(2.2)),type="log",
                       tickvals=c(1/4,1/2,1,2,4),
@@ -204,7 +213,7 @@ OR_adj_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~O
   )
 
 # Save as pdf
-export(OR_adj_plot, "./results/OR_adj_citescore_metareg.pdf")
+export(OR_adj_plot, "./results/figure_S7b.pdf")
 
 cat("\n\n********** Model with interaction ************\n\n")
 
@@ -232,46 +241,8 @@ cat("\n\n---Mean and confidence (ci)/prediction (cr) intervals on odds ratio sca
 predict(all_2stage_int, transf=exp, digits=2)
 
 cat("\n\n---------------------------------------------------------\n\n")
-cat("\n\n--------------------- Missing data ----------------------\n\n")
+cat("\n\n--------- Multiple imputation for missing data-----------\n\n")
 cat("\n\n---------------------------------------------------------\n\n")
-
-icc_df_all <- readRDS(file="./data/processed_data_all.rds")
-
-# Assume all missing cases are female, all missing controls are men
-# What impact will this have on results?s
-icc_df_all$Gender[icc_df_all$case==1 & icc_df_all$Gender == "unknown"] <- "female"
-icc_df_all$Gender[icc_df_all$case==0 & icc_df_all$Gender == "unknown"] <- "male"
-icc_df_all$Gender <- factor(icc_df_all$Gender,levels=c("male","female"))
-
-# Run analyses
-cat("\n\n----------------- Results if we assume all missing cases are female, all missing controls are male ---------------\n\n")
-all_1stage_miss <- clogit(case ~ Gender + strata(pub_id), data = icc_df_all)
-cat("\n\n---Unadjusted analysis---\n")
-summary(all_1stage_miss)
-
-cat("\n\n---Adjusted analysis---\n")
-knots <- c(2.5,5,7.5)
-all_1stage_miss_adj <- clogit(case ~ Gender + ns(years_in_scopus_ptile,knots=knots) + 
-                           ns(h_index_ptile,knots=knots) + ns(n_pubs_ptile,knots=knots) + 
-                           strata(pub_id), data = icc_df_all)
-summary(all_1stage_miss_adj)
-
-cat("\n\n----------------- Including unknown gender in the regression model ---------------\n\n")
-
-icc_df_all <- readRDS(file="./data/processed_data_all.rds")
-
-all_1stage_miss2 <- clogit(case ~ Gender + strata(pub_id), data = icc_df_all)
-cat("\n\n---Unadjusted analysis---\n")
-summary(all_1stage_miss2)
-
-cat("\n\n---Adjusted analysis---\n")
-knots <- c(2.5,5,7.5)
-all_1stage_miss_adj2 <- clogit(case ~ Gender + ns(years_in_scopus_ptile,knots=knots) + 
-                                ns(h_index_ptile,knots=knots) + ns(n_pubs_ptile,knots=knots) + 
-                                strata(pub_id), data = icc_df_all)
-summary(all_1stage_miss_adj2)
-
-cat("\n\n----------------- Multiple imputation ---------------\n\n")
 
 icc_df_all <- readRDS(file="./data/processed_data_all.rds")
 
@@ -345,9 +316,6 @@ icc_df_to_impute$case_years_in_scopus <- icc_df_to_impute$case*icc_df_to_impute$
 icc_df_to_impute$case_h_index <- icc_df_to_impute$case*icc_df_to_impute$h_index_ptile
 icc_df_to_impute$case_n_pubs <- icc_df_to_impute$case*icc_df_to_impute$n_pubs_ptile
 
-# How many cases/controls are Asian?
-CrossTable(icc_df_to_impute$case,icc_df_to_impute$asia)
-
 # run imputation model
 knots <- c(2.5,5,7.5)
 mod_impute <- glmer(gender ~ case + 
@@ -367,10 +335,6 @@ summary(mod_impute)
 p_female <- predict(mod_impute,icc_df_to_impute,
                     type="response",
                     allow.new.levels=TRUE)
-# # plot predicted probabilities by gender
-# ggplot(data.frame(x=factor(icc_df_to_impute$gender),y=p_female),aes(y=y,x=x)) + geom_boxplot()
-# # plot predicted probabilities by missingness
-# ggplot(data.frame(x=factor(is.na(icc_df_to_impute$gender)),y=p_female),aes(y=y,x=x)) + geom_boxplot()
 
 # generate imputed datasets
 imputed_dfs <- list()
@@ -383,7 +347,11 @@ for(i in 1:n.impute){
 }
 saveRDS(imputed_dfs,file="./data/imputed_data.RDS")
 
-# combine results
+cat("--------------------------------------------------\n\n")
+cat("--------------------- Table S7 -------------------\n\n")
+cat("--------------------------------------------------\n\n")
+
+# run unadjusted model on each dataset
 imputed_mods <- lapply(imputed_dfs,
                        FUN=clogit,
                        formula=case ~ gender + 
@@ -449,6 +417,10 @@ icc_df_dedup$pub_id <- factor(icc_df_dedup$pub_id,levels=unique(icc_df_dedup$pub
 
 # keep only top two controls
 icc_df_dedup <- icc_df_dedup[icc_df_dedup$match_score_rank <= 3,]
+
+cat("--------------------------------------------------\n\n")
+cat("--------------------- Table S8 -------------------\n\n")
+cat("--------------------------------------------------\n\n")
 
 cat("\n\n---Unadjusted analysis---\n")
 all_1stage_dedup <- clogit(case ~ Gender + strata(pub_id), data = icc_df_dedup)

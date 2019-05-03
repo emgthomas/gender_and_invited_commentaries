@@ -15,6 +15,10 @@ require(plotly)
 require(RColorBrewer)
 require(lmtest)
 
+## some colors
+cols1 <- brewer.pal(9,name="BuGn")
+cols2 <- brewer.pal(9,name="Oranges")
+
 ## global functions
 source("./code/functions.R")
 
@@ -86,9 +90,8 @@ plot_citescore$ci.lb <- as.numeric(exp(lp - 1.96*se_lp))
 plot_citescore$ci.ub <- as.numeric(exp(lp + 1.96*se_lp))
 
 # Plot
-cols1 <- brewer.pal(9,name="BuGn")
-cols2 <- brewer.pal(9,name="Oranges")
-OR_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~OR,height=600,width=1000, type="scatter", mode="markers") %>%
+OR_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~OR,height=600,width=1000, 
+                   type="scatter", mode="none", name=" ") %>%
   # add horizontal line for null value
   add_trace(x = c(0,18), y= c(1,1), mode = "lines", color=I("black"),
             showlegend=F) %>%
@@ -99,7 +102,7 @@ OR_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~OR,he
             hoverinfo='none',
             alpha=0.8,
             color=I(cols1[4]),
-            name="Journal-specific odds ratio"
+            name="Journal-specific OR estimate"
   )  %>%
   # annotations
   add_trace(x = 16, y = 5, mode="text",text="Favors women",
@@ -117,7 +120,7 @@ OR_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~OR,he
             hoverinfo="none",
             color=I(cols2[5]),
             # line=list(color=I(cols2[1])),
-            name="Predicted odds ratio") %>%
+            name="Estimated OR as function\nof Cite Score") %>%
   # layout
   layout(yaxis = list(title="Odds Ratio (log scale)",range=c(-log(2.2),log(2.2)),type="log",
                       tickvals=c(1/4,1/2,1,2,4,8),
@@ -129,7 +132,7 @@ OR_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~OR,he
   )
 
 # Save as pdf
-export(OR_plot, "./results/OR_citescore.pdf")
+export(OR_plot, "./results/figure_4a.pdf")
 
 cat("\n\n********** Adjusted model--- ************\n\n")
 
@@ -172,7 +175,8 @@ plot_citescore_adj$ci.lb <- as.numeric(exp(lp - 1.96*se_lp))
 plot_citescore_adj$ci.ub <- as.numeric(exp(lp + 1.96*se_lp))
 
 # Make plot
-OR_adj_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~OR_adj,height=600,width=1000, type="scatter", mode="markers") %>%
+OR_adj_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~OR_adj,height=600,width=1000, 
+                       type="scatter", mode="none", name=" ") %>%
   # add horizontal line for null value
   add_trace(x = c(0,18), y= c(1,1), mode = "lines", color=I("black"),
             showlegend=F) %>%
@@ -183,7 +187,7 @@ OR_adj_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~O
             hoverinfo='none',
             color=I(cols1[4]),
             alpha=0.8,
-            name="Journal-specific odds ratio"
+            name="Journal-specific OR estimate"
   )  %>%
   # annotations
   add_trace(x = 16, y = 5, mode="text",text="Favors women",
@@ -200,7 +204,7 @@ OR_adj_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~O
   add_lines(y=plot_citescore_adj$pred, x=plot_citescore_adj$citescore,
             hoverinfo="none",
             color=I(cols2[5]),
-            name="Predicted odds ratio")%>%
+            name="Estimated OR as function\nof Cite Score")%>%
   # layout
   layout(yaxis = list(title="Odds Ratio (log scale)",range=c(-log(2.2),log(2.2)),type="log",
                       tickvals=c(1/4,1/2,1,2,4),
@@ -212,12 +216,12 @@ OR_adj_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~O
   )
 
 # Save as pdf
-export(OR_adj_plot, "./results/OR_adj_citescore.pdf")
+export(OR_adj_plot, "./results/figure_4b.pdf")
 
 cat("\n\n------------ Sub-group analyses by journal topic ----------------\n\n")
 cat("Note: here we perform sub-group analyses by topic using both one- and two-stage
 meta-analysis. The two-stage approach is treated as a sensitivity analysis, but
-we include it here for ease of coding.\n")
+we include it here for ease of coding.\n\n")
 
 # Total number of cases by topic (among journals included in 2-stage meta-analysis)
 topic_case_counts <- sapply(topics_list,function(topic,df) sum(df$n_cases[df[,names(df) == topic]==1],na.rm=T),
@@ -257,6 +261,7 @@ outputs_select$OR_adj[outputs_select$sd_adj>2500] <- NA
 outputs_select$sd_adj[outputs_select$sd_adj>2500] <- NA
 
 # Run analyses
+knots <- c(0.25,0.5,0.75)
 for(i in 1:n_topics){
   cat("\n\n******** Analysing topic:",as.character(topic_counts$topic[i]),"********** \n\n")
   cat("\n\n Topic number",i,"\n\n")
@@ -374,13 +379,16 @@ uppers <- rbind(rep(NA,2),rep(NA,2),
 # make plot/table
 my_ticks <- c(1/4,1/2,1,2,4)
 attr(my_ticks,"labels") <- c("1/4","1/2","1","2","4")
-pdf(file="./results/forestplot_1stage.pdf",width=14,height=15)
+pdf(file="./results/figure_3.pdf",width=14,height=16)
 forestplot(tabletext,mean=means,lower=lowers,upper=uppers,
            is.summary=c(TRUE,TRUE,rep(FALSE,nrow(outputs_topics)),TRUE),
            align=c("l",rep("r",ncol(tabletext)-1)),
-           col=fpColors(box=c(cols1[5], cols2[5]),summary=c(cols1[5], cols2[5])),
+           col=fpColors(box=c(cols1[5], cols2[5]),
+                        lines=c(cols1[5], cols2[5]),
+                        summary=c(cols1[5], cols2[5]),
+                        zero="black"),
            zero=1,
-           xlab="      Favors Men    Favors Women",
+           xlab="     Odds Ratio (log scale)",
            graphwidth=unit(120,units="points"),
            lineheight=unit(22,units="points"),
            colgap=unit(6,"mm"),
@@ -392,7 +400,7 @@ forestplot(tabletext,mean=means,lower=lowers,upper=uppers,
            boxsize=0.3,
            fn.ci_norm = c(fpDrawDiamondCI, fpDrawCircleCI),
            legend = c("Model 1 OR", "Model 2 OR"),
-           legend_args = fpLegend(pos = list("top")),
+           legend_args = fpLegend(pos = list(x=0.6,y=1,"align"="horizontal")),
            new_page=F
 )
 dev.off()
@@ -434,13 +442,16 @@ uppers <- rbind(rep(NA,2),rep(NA,2),
 )
 
 # make plot/table
-pdf(file="./results/forestplot_2stage.pdf",width=14,height=15)
+pdf(file="./results/figure_S6.pdf",width=14,height=16)
 forestplot(tabletext,mean=means,lower=lowers,upper=uppers,
            is.summary=c(TRUE,TRUE,rep(FALSE,nrow(outputs_topics)),TRUE),
            align=c("l",rep("r",ncol(tabletext)-1)),
-           col=fpColors(box=c(cols1[5], cols2[5]),summary=c(cols1[5], cols2[5])),
+           col=fpColors(box=c(cols1[5], cols2[5]),
+                        lines=c(cols1[5], cols2[5]),
+                        summary=c(cols1[5], cols2[5]),
+                        zero="black"),
            zero=1,
-           xlab="      Favors Men    Favors Women",
+           xlab="   Odds Ratio (log scale)",
            graphwidth=unit(120,units="points"),
            lineheight=unit(22,units="points"),
            colgap=unit(6,"mm"),
@@ -452,7 +463,7 @@ forestplot(tabletext,mean=means,lower=lowers,upper=uppers,
            boxsize=0.3,
            fn.ci_norm = c(fpDrawDiamondCI, fpDrawCircleCI),
            legend = c("Model 1 OR", "Model 2 OR"),
-           legend_args = fpLegend(pos = list("top")),
+           legend_args = fpLegend(pos = list(x=0.55,y=1,"align"="horizontal")),
            new_page=F
 )
 dev.off()

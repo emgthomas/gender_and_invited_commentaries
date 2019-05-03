@@ -58,7 +58,7 @@ tapply(unique_authors2$H_Index,unique_authors2$status,quantile,probs=c(0.25,0.5,
 cat("\nAll:\n\n")
 quantile(unique_authors2$H_Index,probs=c(0.25,0.5,0.75),na.rm=T)
 
-cat("------------------------------------------------------\n\n")
+cat("\n\n------------------------------------------------------\n\n")
 cat("--------------------- Other stats --------------------\n\n")
 cat("------------------------------------------------------\n\n")
 
@@ -69,15 +69,27 @@ cases <- authors[authors$case==1,]
 publications <- merge(publications,cases,by="pub_id",all.x=T,all.y=F)
 CrossTable(publications$Gender)
 
-cat("\n\n---Excluding unknown gender---\n\n")
+cat("\n\n---Number of female authors for all ICCs, excluding unknown gender---\n\n")
 publications <- publications[publications$Gender != "unknown",]
 CrossTable(publications$Gender)
 
-cat("\n\n-----------------Gender distribution of unique case authors, excluding unknown gender----------------\n\n")
+cat("\n\n-----------------Number of female authors among unique case authors, excluding unknown gender----------------\n\n")
 icc_df <- readRDS("./data/processed_data_no_missing.rds")
 cases <- icc_df[icc_df$case==1,]
 cases <- cases[!duplicated(cases$auth_id),]
 CrossTable(cases$Gender)
+
+cat("\n\n---Proportion of cases who authored ICCs in multiple journals, by gender---\n\n")
+cases <- icc_df[icc_df$case==1,c("Gender","auth_id")]
+cases$auth_id <- factor(cases$auth_id)
+cases$count <- 1
+cases_n_journals <- tapply(X=cases$count,INDEX=cases$auth_id,FUN=sum)
+cases_n_journals <- data.frame(auth_id=names(cases_n_journals),n_journals=cases_n_journals)
+cases_n_journals <- merge(cases_n_journals,cases[!duplicated(cases$auth_id),c("Gender","auth_id")],by="auth_id",all.X=T,all.y=F)
+tapply(cases_n_journals$n_journals>1,cases_n_journals$Gender,mean)
+cat("\n\nAll\n")
+mean(cases_n_journals$n_journals>1)
+sum(cases_n_journals$n_journals>1)
 
 cat("\n\n-----------------Gender of controls by gender of case, excluding unknown gender----------------\n\n")
 female_case_pubs <- icc_df[icc_df$case==1 & icc_df$Gender=="female",]$pub_id
@@ -103,18 +115,6 @@ mean(male_cases_av_controls)
 cat("\n\n-----------------Number of controls per case included in analysis----------------\n\n")
 n_controls <- tapply(1-icc_df$case,icc_df$pub_id,sum)
 summary(n_controls)
-
-cat("\n\n---Proportion of cases who authored ICCs in multiple journals, by gender---\n")
-cases <- icc_df[icc_df$case==1,c("Gender","auth_id")]
-cases$auth_id <- factor(cases$auth_id)
-cases$count <- 1
-cases_n_journals <- tapply(X=cases$count,INDEX=cases$auth_id,FUN=sum)
-cases_n_journals <- data.frame(auth_id=names(cases_n_journals),n_journals=cases_n_journals)
-cases_n_journals <- merge(cases_n_journals,cases[!duplicated(cases$auth_id),c("Gender","auth_id")],by="auth_id",all.X=T,all.y=F)
-tapply(cases_n_journals$n_journals>1,cases_n_journals$Gender,mean)
-cat("\n\nAll\n")
-mean(cases_n_journals$n_journals>1)
-sum(cases_n_journals$n_journals>1)
 
 cat("\n\n---Summary of number of journals, by gender---\n")
 tapply(cases_n_journals$n_journals,cases_n_journals$Gender,summary)
