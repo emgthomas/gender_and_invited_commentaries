@@ -11,7 +11,7 @@ Names of topics corresponding to each ASJC code, for different levels of the ASJ
 ## authors_asian.rds
 Data frame indicating which authors have Asian country of origin. We do not provide full country of origin information to ensure authors cannot be identified.
 
-## authors_raw.provides
+## authors_raw.rds
 List of authors in each matched set. Author ID variable (auth_id) was randomly generated.
 
 ## imputed_data.rds

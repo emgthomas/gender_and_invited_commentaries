@@ -53,7 +53,7 @@ shinyServer(
       if(input$filter == "Journal"){
         out <- filter(out,sourcetitle %in% input$which_journals)
       }
-
+      
       if(input$filter == "Topic"){
         out <- out[rowSums(out[,input$which_topics,drop=F]) > 0,]
       }
@@ -79,10 +79,17 @@ shinyServer(
       
       # basic plot (just axes)
       plt <- plot_ly(out) %>%
-      # add horizontal line for null value
-      add_lines(x = c(0,18), y= c(1,1),
-                color=I("black"), 
-                hoverinfo="none") %>%
+        # add horizontal line for null value
+        add_lines(x = c(0,18), y= c(1,1),
+                  color=I("black"), 
+                  hoverinfo="none") %>%
+        # annotations
+        add_trace(x = 16, y = 9, mode="text",text="Favors women",
+                  hoverinfo="none",textfont=list(size=20,color=1),
+                  marker=list(opacity=0)) %>%
+        add_trace(x = 16, y = 1/9, mode="text",text="Favors men",
+                  hoverinfo="none",textfont=list(size=20,color=1),
+                  marker=list(opacity=0)) %>%
         # layout
         layout(yaxis = list(title="Odds Ratio (log scale)",range=c(-log(3),log(3)),type="log",
                             tickvals=c(1/8,1/4,1/2,1,2,4,8),
@@ -99,15 +106,15 @@ shinyServer(
         
         # add circles for each journal
         plt <- add_trace(plt,
-                  x=~citescore,y=~OR_plot,
-                  type='scatter',
-                  mode='markers',
-                  size = ~node_size_plot*2, 
-                  color= ~pval_plot,
-                  marker=list(sizeref=0.2,
-                              opacity=0.6),
-                  hoverinfo="text",
-                  hovertext=~hovertext
+                         x=~citescore,y=~OR_plot,
+                         type='scatter',
+                         mode='markers',
+                         size = ~node_size_plot*2, 
+                         color= ~pval_plot,
+                         marker=list(sizeref=0.2,
+                                     opacity=0.6),
+                         hoverinfo="text",
+                         hovertext=~hovertext
         ) 
       } else if(nrow(out)==1) {
         # add circle for single journal
@@ -133,7 +140,7 @@ shinyServer(
                          hoverinfo="none"
         )
       }
-
+      
       plt <- colorbar(plt,title="P-value",
                       limits=c(0,1),
                       cmin=0,cmax=1,
