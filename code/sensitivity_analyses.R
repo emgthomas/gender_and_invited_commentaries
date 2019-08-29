@@ -405,9 +405,13 @@ res_imp_int_df
 cat("\n\n--------------------------------------------------------------------------------------\n\n")
 cat("\n\n------------- De-duplicating case authors present in multiple journals ---------------\n\n")
 cat("\n\n-------------------- and stricter match criteria for controls ------------------------\n\n")
+cat("\n\n------------ and removing cases that may be replies to other authors -----------------\n\n")
 cat("\n\n--------------------------------------------------------------------------------------\n\n")
 
 icc_df <- readRDS(file="./data/processed_data_no_missing.rds")
+
+### Exclude publications that had one of the following words in the title: reply, replies, repsonse, responses, respond, responds 
+icc_df <- icc_df[icc_df$only_replies == F | is.na(icc_df$only_replies),]
 
 # de-duplicate case authors
 icc_df_case <- icc_df[icc_df$case==1,]

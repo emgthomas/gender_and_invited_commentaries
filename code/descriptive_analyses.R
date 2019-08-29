@@ -58,6 +58,11 @@ tapply(unique_authors2$H_Index,unique_authors2$status,quantile,probs=c(0.25,0.5,
 cat("\nAll:\n\n")
 quantile(unique_authors2$H_Index,probs=c(0.25,0.5,0.75),na.rm=T)
 
+cat("\n\n-----------------Missing covariate data----------------\n\n")
+missing_cov <- is.na(unique_authors2$years_in_scopus) | is.na(unique_authors2$Total_Publications_In_Scopus) | is.na(unique_authors2$H_Index)
+CrossTable(unique_authors2$status,missing_cov,
+           prop.r=T,prop.c=F,prop.t=F,prop.chisq=F)
+
 cat("\n\n------------------------------------------------------\n\n")
 cat("--------------------- Other stats --------------------\n\n")
 cat("------------------------------------------------------\n\n")
@@ -90,6 +95,11 @@ tapply(cases_n_journals$n_journals>1,cases_n_journals$Gender,mean)
 cat("\n\nAll\n")
 mean(cases_n_journals$n_journals>1)
 sum(cases_n_journals$n_journals>1)
+
+cat("\n\n---Fraction and number of articles that had replies, responds, etc in the title---\n")
+publications <- readRDS(file="./data/publications_raw.rds")
+mean(publications$replies)
+sum(publications$replies)
 
 cat("\n\n-----------------Gender of controls by gender of case, excluding unknown gender----------------\n\n")
 female_case_pubs <- icc_df[icc_df$case==1 & icc_df$Gender=="female",]$pub_id
@@ -128,6 +138,7 @@ cat("\n\n---Years in scopus percentile vs. number of pubs percentile---\n\n")
 cor(icc_df$years_in_scopus_ptile,icc_df$n_pubs_ptile,use="complete.obs",method="spearman")
 cat("\n\n---H-index percentile vs. number of pubs percentile---\n\n")
 cor(icc_df$h_index_ptile,icc_df$n_pubs_ptile,use="complete.obs",method="spearman")
+
 
 #######################################################################
 sink()

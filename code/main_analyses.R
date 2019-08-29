@@ -41,7 +41,7 @@ all_1stage <- clogit(case ~ Gender + strata(pub_id), data = icc_df)
 cat("---Unadjusted analysis---\n")
 summary(all_1stage)
 
-cat("\n\n---Adjusted for measures of seniority using natural cubic splines---\n")
+cat("\n\n---Adjusted for author-level covariates using natural cubic splines---\n")
 knots <- c(2.5,5,7.5)
 all_1stage_adj <- clogit(case ~ Gender + ns(years_in_scopus_ptile,knots=knots) + 
                            ns(h_index_ptile,knots=knots) + ns(n_pubs_ptile,knots=knots) + 

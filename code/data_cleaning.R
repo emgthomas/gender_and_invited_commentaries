@@ -53,6 +53,9 @@ controls <- authors3[authors3$case==0,] # separate out controls
 cases <- authors3[authors3$case==1,] # separate out cases
 controls.keep <- logical(length=nrow(controls))
 cases.keep <- logical(length=nrow(cases))
+# Also, determine which cases *only* wrote replies/response to letters/commentaries within each journal 
+# (these will be excluded in a sensitivity analysis)
+cases.only_replies <- logical(length=nrow(cases))
 i <- 0
 cat("\n\nProcessing data for ",length(unique(controls$pub_sourceid)),"journals...\n\n")
 for(pub in unique(controls$pub_sourceid)){
@@ -63,11 +66,19 @@ for(pub in unique(controls$pub_sourceid)){
   controls.keep[which_controls] <- !(controls$auth_id[which_controls] %in% unique(cases$auth_id[which_cases]))
   # within journals, remove any duplicate cases
   cases.keep[which_cases] <- !duplicated(cases$auth_id[which_cases])
+  # check which authors *only* wrote replies/response in this journal
+  only_replies <- tapply(cases$replies[which_cases],cases$auth_id[which_cases],mean) # compute fraction of cases per author which are replies
+  only_replies <- as.numeric(names(only_replies)[only_replies==1]) # if fraction is one, that author only wrote replies in this journal
+  cases.only_replies[which_cases & cases$auth_id %in% only_replies] <- T
   if((i %% 100)==0) print(i)
 }
 cat("\n\nDone.\n\n")
 # put cases and controls back together
+cases$only_replies <- cases.only_replies
+controls$only_replies <- NA
 authors4 <- rbind(cases[cases.keep,],controls[controls.keep,])
+authors4$replies <- NULL
+publications$replies <- NULL
 
 cat("\n\n------- Flow chart Step 5 (Excluded)------- \n\n")
 cat("Number of controls excluded = ",sum(1-authors2$case) - sum(1-authors4$case))
