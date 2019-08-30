@@ -1,8 +1,5 @@
 library(shiny)
 library(plotly)
-library(dplyr)
-library(metafor)
-library(splines)
 
 df <- readRDS( "journal_ORs.rds")
 
@@ -148,7 +145,7 @@ shinyServer(
     
     # setup to allow download of eTable 6
     output$metaData <- downloadHandler(
-      filename="eTable6.csv",  # desired file name on client 
+      filename="eTable6.xlsx",  # desired file name on client 
       content=function(file) {
         file.copy("eTable6.xlsx", file)
       }

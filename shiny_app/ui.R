@@ -2,7 +2,6 @@ library(shiny)
 library(plotly)
 library(shinyWidgets)
 
-# setwd("/Users/emt380/Documents/PhD_Papers/Gender_bias/R_code/gender_bias_invited_commentary/github/shiny_app")
 df <- readRDS( "journal_ORs.rds")
 topics_list <- readRDS("topics_list.rds")
 
