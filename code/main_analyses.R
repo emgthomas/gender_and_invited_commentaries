@@ -932,9 +932,51 @@ outputs_select[,names(outputs_select) %in% names(topic_counts)[topic_counts==0]]
 outputs_select[is.na(outputs_select) & col(outputs_select) > 20] <- 0
 topics_list <- intersect(names(journal_topics)[-c(1,2)],names(outputs_select))
 
+# add yearly ICC counts for these journals
+pub_counts <- readRDS("data/pub_counts_known_gender_by_year_and_journal.rds")
+pub_counts <- subset(pub_counts,pub_sourceid %in% outputs_select$journal)
+pub_counts <- reshape(pub_counts,direction="wide",timevar="year",idvar="pub_sourceid")
+outputs_select <- merge(outputs_select,pub_counts,by.x="journal",by.y="pub_sourceid")
+
 # save results for use in plotting and random effects meta-analysis
 saveRDS(outputs_select, "./shiny_app/journal_ORs.rds")
 saveRDS(topics_list,"./shiny_app/topics_list.rds")
+
+# save table of journal-specific results
+outputs_select$topics_list <- apply(outputs_select[,topics_list],1,
+                                   function(x,topics_list) paste(topics_list[x==1],collapse="; ",sep=""),
+                                   topics_list=topics_list)
+outputs_select[,topics_list] <- NULL
+outputs_select[,c("effect","sd","effect_adj","sd_adj","included","node_size","node_size_adj","effect_main",
+                  "n_cases_int","sd_main","effect_int","sd_int")] <- NULL
+outputs_select$OR <- sprintf(outputs_select$OR, fmt="%.2f")
+outputs_select$ci_lower <- sprintf(outputs_select$ci_lower, fmt="%.2f")
+outputs_select$ci_upper <- sprintf(outputs_select$ci_upper, fmt="%.2f")
+outputs_select$pval <- sprintf(outputs_select$pval, fmt="%.3f")
+outputs_select$OR_adj <- sprintf(outputs_select$OR_adj, fmt="%.2f")
+outputs_select$ci_lower_adj <- sprintf(outputs_select$ci_lower_adj, fmt="%.2f")
+outputs_select$ci_upper_adj <- sprintf(outputs_select$ci_upper_adj, fmt="%.2f")
+outputs_select$pval_adj <- sprintf(outputs_select$pval_adj, fmt="%.3f")
+outputs_select <- outputs_select[order(outputs_select$sourcetitle),]
+outputs_select$journal <- as.character(outputs_select$journal)
+outputs_select <- outputs_select[,c("journal","sourcetitle","citescore",
+                  "n_cases",
+                  "OR","ci_lower","ci_upper","pval",
+                  "n_cases_adj",
+                  "OR","ci_lower","ci_upper","pval_adj",
+                  "npubs.2013","npubs.2014","npubs.2015","npubs.2016","npubs.2017","topics_list")]
+names(outputs_select) <- c("Scopus Source Identifier","Journal","2016 Cite Score",
+                           "Number of Unique ICC Authors (Cases)",
+                           "Unadjusted Odds Ratio","Unadjusted CI Lower Bound","Unadjusted CI Upper Bound","Unadjusted P-Value",
+                           "Number of Cases Included in Adjusted Analysis",
+                           "Adjusted Odds Ratio","Adjusted CI Lower Bound","Adjusted CI Upper Bound","Adjusted P-Value",
+                           "Number of ICCs (2013)","Number of ICCs (2014)","Number of ICCs (2015)","Number of ICCs (2016)","Number of ICCs (2017)",
+                           "Journal Topics (from ASJC codes)")
+
+# write unadjusted results to csv
+write.csv(outputs_select,
+          file="./results/metadata_interactive_figure.csv",
+          row.names = F)
 
 #######################################################################
 sink()

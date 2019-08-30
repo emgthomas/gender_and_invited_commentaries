@@ -5,18 +5,6 @@ library(metafor)
 library(splines)
 
 df <- readRDS( "journal_ORs.rds")
-# 
-# j <- c("JAMA - Journal of the American Medical Association",
-# "JAMA Dermatology",
-# "JAMA Facial Plastic Surgery",
-# "JAMA Internal Medicine",
-# "JAMA Neurology",
-# "JAMA Oncology",
-# "JAMA Ophthalmology",
-# "JAMA Otolaryngology - Head and Neck Surgery",
-# "JAMA Pediatrics",
-# "JAMA Psychiatry",
-# "JAMA Surgery")
 
 shinyServer(
   function(input, output) {
@@ -63,11 +51,18 @@ shinyServer(
       }
       
       out$hovertext <- paste("<i>",out$sourcetitle,"</i>",
-                             '<br>Cite Score: ', sprintf(out$citescore, fmt="%.2f"),
-                             "<br>Number of cases: ", out$n_cases_plot,
                              '<br>OR: ',sprintf(out$OR_plot, fmt="%.2f"),
                              ' (',sprintf(out$ci_lower_plot, fmt="%.2f"),
-                             ',',sprintf(out$ci_upper_plot, fmt="%.2f"),')',sep="")
+                             ',',sprintf(out$ci_upper_plot, fmt="%.2f"),')',
+                             '<br>Cite Score: ', sprintf(out$citescore, fmt="%.2f"),
+                             "<br>Unique ICC authors: ", out$n_cases_plot,
+                             "<br>Number of ICCs ",
+                             "<br>2013: ", out$npubs.2013,
+                             "<br>2014: ", out$npubs.2014,
+                             "<br>2015: ", out$npubs.2015,
+                             "<br>2016: ", out$npubs.2016,
+                             "<br>2017: ", out$npubs.2017,
+                             sep="")
       
       return(out)
       
