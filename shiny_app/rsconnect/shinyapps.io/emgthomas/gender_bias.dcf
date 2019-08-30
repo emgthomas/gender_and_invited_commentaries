@@ -5,9 +5,9 @@ account: emgthomas
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 725581
-bundleId: 2369610
+bundleId: 2371796
 url: https://emgthomas.shinyapps.io/gender_bias/
-when: 1567121629.51076
+when: 1567188142.22933
 asMultiple: FALSE
 asStatic: FALSE
 ignoredFiles: README.md

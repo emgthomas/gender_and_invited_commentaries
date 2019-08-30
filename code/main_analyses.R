@@ -966,12 +966,12 @@ outputs_select <- outputs_select[,c("journal","sourcetitle","citescore",
                   "OR","ci_lower","ci_upper","pval_adj",
                   "npubs.2013","npubs.2014","npubs.2015","npubs.2016","npubs.2017","topics_list")]
 names(outputs_select) <- c("Scopus Source Identifier","Journal","2016 Cite Score",
-                           "Number of Unique ICC Authors (Cases)",
-                           "Odds Ratio (Model 1)","95% CI Lower Bound (Model 1)","95% CI Upper Bound (Model 1)","P-Value (Model 1)",
                            "Number of Cases (Model 1)",
+                           "Odds Ratio (Model 1)","95% CI Lower Bound (Model 1)","95% CI Upper Bound (Model 1)","P-Value (Model 1)",
+                           "Number of Cases (Model 2)",
                            "Odds Ratio (Model 2)","95% CI Lower Bound (Model 2)","95% CI Upper Bound (Model 2)","P-Value (Model 2)",
                            "Number of ICCs (2013)","Number of ICCs (2014)","Number of ICCs (2015)","Number of ICCs (2016)","Number of ICCs (2017)",
-                           "Journal Topics (from ASJC codes)")
+                           "Journal Topics")
 
 # write unadjusted results to csv
 write.csv(outputs_select,

@@ -9,7 +9,7 @@ topics_list <- readRDS("topics_list.rds")
 shinyUI(
   fluidPage(
     
-    titlePanel("Estimated journal-specific odds ratio vs journal Cite Score"),
+    titlePanel("eFigure 8: Estimated journal-specific odds ratio vs journal Cite Score"),
     
     fluidRow(
     
@@ -52,6 +52,10 @@ shinyUI(
                     choices = c("Yes","No"),
                     multiple = FALSE,
                     selected = "No")
+      ),
+      downloadButton(
+        "metaData",
+        "Download all data (eTable 6)"
       )
       ),
       

@@ -56,7 +56,7 @@ shinyServer(
                              ',',sprintf(out$ci_upper_plot, fmt="%.2f"),')',
                              '<br>Cite Score: ', sprintf(out$citescore, fmt="%.2f"),
                              "<br>Unique ICC authors: ", out$n_cases_plot,
-                             "<br>Number of ICCs ",
+                             "<br>Number of ICCs included",
                              "<br>2013: ", out$npubs.2013,
                              "<br>2014: ", out$npubs.2014,
                              "<br>2015: ", out$npubs.2015,
@@ -68,6 +68,7 @@ shinyServer(
       
     })
     
+    # make plot
     output$scatterplot <- renderPlotly({
       
       out <- scatterplot_data()
@@ -144,6 +145,14 @@ shinyServer(
       plt
       
     })
+    
+    # setup to allow download of eTable 6
+    output$metaData <- downloadHandler(
+      filename="eTable6.csv",  # desired file name on client 
+      content=function(file) {
+        file.copy("eTable6.xlsx", file)
+      }
+    )
     
   }
 )
