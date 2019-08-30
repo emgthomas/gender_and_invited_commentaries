@@ -63,6 +63,58 @@ missing_cov <- is.na(unique_authors2$years_in_scopus) | is.na(unique_authors2$To
 CrossTable(unique_authors2$status,missing_cov,
            prop.r=T,prop.c=F,prop.t=F,prop.chisq=F)
 
+icc_df_all <- readRDS(file="./data/processed_data_all.rds")
+
+cat("--------------------------------------------------\n\n")
+cat("--------------------- eTable 1 -------------------\n\n")
+cat("--------------------------------------------------\n\n")
+
+cat("-----------------Author-level variables for *unique* authors by gender, including those with missing gender----------------\n\n")
+
+unique_authors <- icc_df_all[,c("auth_id","Gender","case",
+                                "years_in_scopus","Total_Publications_In_Scopus",
+                                "H_Index","asia")]
+unique_authors <- unique_authors[!duplicated(unique_authors),]
+controls <- unique(unique_authors$auth_id[unique_authors$case==0])
+cases <- unique(unique_authors$auth_id[unique_authors$case==1])
+both <- intersect(controls,cases)
+
+# actual unique authors, de-duplicating those that act as both case and control
+unique_authors2 <- unique_authors[,c("auth_id","Gender",
+                                     "years_in_scopus","Total_Publications_In_Scopus",
+                                     "H_Index","asia")]
+unique_authors2 <- unique_authors2[!duplicated(unique_authors2),]
+unique_authors2$status <- "Control"
+unique_authors2$status[unique_authors2$auth_id %in% cases] <- "Case"
+unique_authors2$status[unique_authors2$auth_id %in% both] <- "Both"
+unique_authors2$status <- factor(unique_authors2$status,levels=c("Case","Control","Both"))
+
+cat("\n\n----Gender----\n\n")
+CrossTable(unique_authors2$status,unique_authors2$Gender,
+           prop.r=F,prop.c=T,prop.t=F,prop.chisq=F)
+
+cat("\n\n----Asian country of origin----\n\n")
+unique_authors2$country_of_origin <- "Asian"
+unique_authors2$country_of_origin[unique_authors2$asia==0] <- "Not Asian"
+unique_authors2$country_of_origin[is.na(unique_authors2$asia)] <- "Unknown"
+CrossTable(unique_authors2$country_of_origin,unique_authors2$Gender,
+           prop.r=F,prop.c=T,prop.t=F,chisq=F,prop.chisq=F)
+
+cat("\n\n----Quartiles of years since first publication----\n\n")
+tapply(unique_authors2$years_in_scopus,unique_authors2$Gender,quantile,probs=c(0.25,0.5,0.75),na.rm=T)
+cat("\nAll:\n\n")
+quantile(unique_authors2$years_in_scopus,probs=c(0.25,0.5,0.75),na.rm=T)
+
+cat("\n\n----Number of publications----\n\n")
+tapply(unique_authors2$Total_Publications_In_Scopus,unique_authors2$Gender,quantile,probs=c(0.25,0.5,0.75),na.rm=T)
+cat("\nAll:\n\n")
+quantile(unique_authors2$Total_Publications_In_Scopus,probs=c(0.25,0.5,0.75),na.rm=T)
+
+cat("\n\n----H-Index----\n\n")
+tapply(unique_authors2$H_Index,unique_authors2$Gender,quantile,probs=c(0.25,0.5,0.75),na.rm=T)
+cat("\nAll:\n\n")
+quantile(unique_authors2$H_Index,probs=c(0.25,0.5,0.75),na.rm=T)
+
 cat("\n\n------------------------------------------------------\n\n")
 cat("--------------------- Other stats --------------------\n\n")
 cat("------------------------------------------------------\n\n")

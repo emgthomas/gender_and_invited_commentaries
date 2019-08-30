@@ -331,7 +331,7 @@ cat(sum(outputs_topics$ci.ub_adj_1stage < 1),"of",nrow(outputs_topics),"topic-sp
 
 save(outputs_topics,file="./results/secondary_analyses.Rdata")
 
-#### Produce forest plot3 #####
+#### Produce forest plot #####
 
 load("./results/main_analyses.Rdata")
 load("./results/two_stage_analyses.Rdata")
@@ -442,7 +442,7 @@ uppers <- rbind(rep(NA,2),rep(NA,2),
 )
 
 # make plot/table
-pdf(file="./results/figure_S6.pdf",width=14,height=16)
+pdf(file="./results/eFigure_6.pdf",width=14,height=16)
 forestplot(tabletext,mean=means,lower=lowers,upper=uppers,
            is.summary=c(TRUE,TRUE,rep(FALSE,nrow(outputs_topics)),TRUE),
            align=c("l",rep("r",ncol(tabletext)-1)),

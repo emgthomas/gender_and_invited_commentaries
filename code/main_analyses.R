@@ -129,7 +129,7 @@ OR_plot <- plot_ly(plot_effects, x = ~ptile, y= ~pred1,
          font=list(size=16)
   )
 
-export(OR_plot, "./results/figure_S1.pdf")
+export(OR_plot, "./results/eFigure_3.pdf")
 
 cat("\n\n------------ Effect modification by author-level variables ----------------\n\n")
 
@@ -296,7 +296,7 @@ uppers <- c(NA,NA,OR_df$ci.ub)
 # make plot/table
 my_ticks <- c(2/3,1,3/2)
 attr(my_ticks,"labels") <- c("2/3","1","3/2")
-pdf(file="./results/figure_S5a.pdf",width=7,height=3)
+pdf(file="./results/eFigure_7a.pdf",width=7,height=3)
 forestplot(tabletext,mean=means,lower=lowers,upper=uppers,
            #align=c("l",rep("r",ncol(tabletext)-1)),
            align=rep("c",3),
@@ -395,7 +395,7 @@ OR_plot_int <- plot_ly(plot_effects, x = ~ptile, y= ~pred_f, height=height,width
          font=list(size=16)
   )
 
-export(OR_plot_int, "./results/figure_S2a.pdf")
+export(OR_plot_int, "./results/eFigure_4a.pdf")
 
 # Plot
 OR_plot <- plot_ly(plot_effects, x = ~ptile, y= ~pred_h_index, height=700,width=600, 
@@ -439,7 +439,7 @@ OR_plot <- plot_ly(plot_effects, x = ~ptile, y= ~pred_h_index, height=700,width=
          font=list(size=16)
   )
 
-export(OR_plot, "./results/figure_S2b.pdf")
+export(OR_plot, "./results/eFigure_4b.pdf")
 
 cat("--------------------------------------------------\n\n")
 cat("--------------------- Table S4 -------------------\n\n")
@@ -489,7 +489,7 @@ uppers <- c(NA,NA,OR_df$ci.ub)
 # make plot/table
 my_ticks <- c(2/3,1,3/2)
 attr(my_ticks,"labels") <- c("2/3","1","3/2")
-pdf(file="./results/figure_S5b.pdf",width=7,height=3)
+pdf(file="./results/eFigure_7b.pdf",width=7,height=3)
 forestplot(tabletext,mean=means,lower=lowers,upper=uppers,
            #align=c("l",rep("r",ncol(tabletext)-1)),
            align=rep("c",3),
@@ -575,7 +575,7 @@ OR_plot_int <- plot_ly(plot_effects, x = ~ptile, y= ~pred_f, height=700,width=60
          font=list(size=16)
   )
 
-export(OR_plot_int, "./results/figure_S3a.pdf")
+export(OR_plot_int, "./results/eFigure_5a.pdf")
 
 # Plot
 OR_plot <- plot_ly(plot_effects, x = ~ptile, y= ~pred_years_in_scopus, 
@@ -619,7 +619,7 @@ OR_plot <- plot_ly(plot_effects, x = ~ptile, y= ~pred_years_in_scopus,
          font=list(size=16)
   )
 
-export(OR_plot, "./results/figure_S3b.pdf")
+export(OR_plot, "./results/eFigure_5b.pdf")
 
 cat("--------------------------------------------------\n\n")
 cat("--------------------- Table S5 -------------------\n\n")
@@ -670,7 +670,7 @@ uppers <- c(NA,NA,OR_df$ci.ub)
 # make plot/table
 my_ticks <- c(2/3,1,3/2)
 attr(my_ticks,"labels") <- c("2/3","1","3/2")
-pdf(file="./results/figure_S5c.pdf",width=8,height=3)
+pdf(file="./results/eFigure_7c.pdf",width=8,height=3)
 forestplot(tabletext,mean=means,lower=lowers,upper=uppers,
            #align=c("l",rep("r",ncol(tabletext)-1)),
            align=rep("c",3),
@@ -756,7 +756,7 @@ OR_plot_int <- plot_ly(plot_effects, x = ~ptile, y= ~pred_f, height=700,width=60
          font=list(size=16)
   )
 
-export(OR_plot_int, "./results/figure_S4a.pdf")
+export(OR_plot_int, "./results/eFigure_6a.pdf")
 
 # Plot
 OR_plot <- plot_ly(plot_effects, x = ~ptile, y= ~pred_years_in_scopus, height=700,width=600, 
@@ -800,7 +800,7 @@ OR_plot <- plot_ly(plot_effects, x = ~ptile, y= ~pred_years_in_scopus, height=70
          font=list(size=16)
   )
 
-export(OR_plot, "./results/figure_S4b.pdf")
+export(OR_plot, "./results/eFigure_6b.pdf")
 
 cat("\n\n------------ Case control analysis by journal ----------------\n\n")
 
@@ -975,7 +975,7 @@ names(outputs_select) <- c("Scopus Source Identifier","Journal","2016 Cite Score
 
 # write unadjusted results to csv
 write.csv(outputs_select,
-          file="./results/eTable6.csv",
+          file="./results/eTable_6.csv",
           row.names = F)
 
 #######################################################################
