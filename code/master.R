@@ -3,7 +3,7 @@
 # ---------------------------------------------------------- #
 
 # Set the working directory to the ~~root directory of the git repository~~
-setwd("/Users/emt380/Documents/PhD_Papers/Gender_bias/R_code/gender_bias_invited_commentary/")
+setwd("/Users/emt380/Documents/PhD_Papers/Gender_bias/R_code/gender_and_invited_commentaries/github")
 
 # Run files in appropriate order
 source("./code/functions.R")

@@ -14,7 +14,7 @@
 
 --------------------------------------------------
 
---------------------- Table S6 -------------------
+--------------------- eTable 7 -------------------
 
 --------------------------------------------------
 
@@ -232,143 +232,6 @@ Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’
 
 ---------------------------------------------------------
 
---------------------------------------------------
-
---------------------- Table S1 -------------------
-
---------------------------------------------------
-
------------------Author-level variables for *unique* authors by gender, including those with missing gender----------------
-
-
-
-----Gender----
-
-
- 
-   Cell Contents
-|-------------------------|
-|                       N |
-|           N / Col Total |
-|-------------------------|
-
- 
-Total Observations in Table:  167705 
-
- 
-                       | unique_authors2$Gender 
-unique_authors2$status |      male |    female |   unknown | Row Total | 
------------------------|-----------|-----------|-----------|-----------|
-                  Case |     10454 |      4265 |      2738 |     17457 | 
-                       |     0.120 |     0.095 |     0.078 |           | 
------------------------|-----------|-----------|-----------|-----------|
-               Control |     62359 |     35908 |     29455 |    127722 | 
-                       |     0.713 |     0.798 |     0.836 |           | 
------------------------|-----------|-----------|-----------|-----------|
-                  Both |     14641 |      4848 |      3037 |     22526 | 
-                       |     0.167 |     0.108 |     0.086 |           | 
------------------------|-----------|-----------|-----------|-----------|
-          Column Total |     87454 |     45021 |     35230 |    167705 | 
-                       |     0.521 |     0.268 |     0.210 |           | 
------------------------|-----------|-----------|-----------|-----------|
-
- 
-
-
-----Asian country of origin----
-
-
- 
-   Cell Contents
-|-------------------------|
-|                       N |
-|           N / Col Total |
-|-------------------------|
-
- 
-Total Observations in Table:  167705 
-
- 
-                                  | unique_authors2$Gender 
-unique_authors2$country_of_origin |      male |    female |   unknown | Row Total | 
-----------------------------------|-----------|-----------|-----------|-----------|
-                            Asian |     11527 |      3553 |     15743 |     30823 | 
-                                  |     0.132 |     0.079 |     0.447 |           | 
-----------------------------------|-----------|-----------|-----------|-----------|
-                        Not Asian |     75822 |     41414 |     19054 |    136290 | 
-                                  |     0.867 |     0.920 |     0.541 |           | 
-----------------------------------|-----------|-----------|-----------|-----------|
-                          Unknown |       105 |        54 |       433 |       592 | 
-                                  |     0.001 |     0.001 |     0.012 |           | 
-----------------------------------|-----------|-----------|-----------|-----------|
-                     Column Total |     87454 |     45021 |     35230 |    167705 | 
-                                  |     0.521 |     0.268 |     0.210 |           | 
-----------------------------------|-----------|-----------|-----------|-----------|
-
- 
-
-
-----Quartiles of years since first publication----
-
-$male
-25% 50% 75% 
- 13  21  30 
-
-$female
-25% 50% 75% 
- 10  16  24 
-
-$unknown
-25% 50% 75% 
- 10  15  23 
-
-
-All:
-
-25% 50% 75% 
- 11  18  27 
-
-
-----Number of publications----
-
-$male
-25% 50% 75% 
- 41  84 165 
-
-$female
-25% 50% 75% 
- 26  49  93 
-
-$unknown
-25% 50% 75% 
- 29  58 116 
-
-
-All:
-
-25% 50% 75% 
- 33  66 134 
-
-
-----H-Index----
-
-$male
-25% 50% 75% 
- 12  21  36 
-
-$female
-25% 50% 75% 
-  9  15  26 
-
-$unknown
-25% 50% 75% 
-  9  15  25 
-
-
-All:
-
-25% 50% 75% 
- 10  18  31 
 -----------------Multiple imputation analysis----------------
 
 npt = 3 , n =  1 
@@ -382,7 +245,8 @@ rho:  2.0e-06 eval:  11 fn:      462945. par:0.757538
 rho:  2.0e-07 eval:  13 fn:      462945. par:0.757538 
 At return
 eval:  16 fn:      462945.29 par: 0.757537
-Generalized linear mixed model fit by maximum likelihood (Adaptive Gauss-Hermite Quadrature, nAGQ = 0) ['glmerMod']
+Generalized linear mixed model fit by maximum likelihood (Adaptive Gauss-Hermite Quadrature, nAGQ = 0) [glmerMod
+]
  Family: binomial  ( logit )
 Formula: gender ~ case + case_years_in_scopus + case_h_index + case_n_pubs +  
     asia + ns(years_in_scopus_ptile, knots = knots) + ns(h_index_ptile,  
@@ -425,7 +289,7 @@ ns(n_pubs_ptile, knots = knots)4          -3.193495   0.034571 -92.374  < 2e-16 
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 --------------------------------------------------
 
---------------------- Table S7 -------------------
+--------------------- eTable 8 -------------------
 
 --------------------------------------------------
 
@@ -486,15 +350,15 @@ gender:years_in_scopus_ptile              0.9747991 0.9669240 0.9827385 6.948833
 
 
 
---------------------------------------------------------------------------------------
+------------ and removing cases that may be replies to other authors -----------------
 
----Fraction and number of cases that only published articles with replies, responds, etc in the title---
-[1] 0.06735157
-[1] 3114
+
+
+--------------------------------------------------------------------------------------
 
 --------------------------------------------------
 
---------------------- Table S8 -------------------
+--------------------- eTable 9 -------------------
 
 --------------------------------------------------
 
@@ -502,266 +366,154 @@ gender:years_in_scopus_ptile              0.9747991 0.9669240 0.9827385 6.948833
 
 ---Unadjusted analysis---
 Call:
-coxph(formula = Surv(rep(1, 90296L), case) ~ Gender + strata(pub_id), 
+coxph(formula = Surv(rep(1, 84452L), case) ~ Gender + strata(pub_id), 
     data = icc_df_dedup, method = "exact")
 
-  n= 90296, number of events= 34047 
+  n= 84452, number of events= 31821 
 
                  coef exp(coef) se(coef)      z Pr(>|z|)    
-Genderfemale -0.26430   0.76774  0.01668 -15.85   <2e-16 ***
+Genderfemale -0.28098   0.75504  0.01728 -16.26   <2e-16 ***
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
              exp(coef) exp(-coef) lower .95 upper .95
-Genderfemale    0.7677      1.303    0.7431    0.7933
+Genderfemale     0.755      1.324    0.7299    0.7811
 
 Rsquare= 0.003   (max possible= 0.511 )
-Likelihood ratio test= 254.6  on 1 df,   p=0
-Wald test            = 251.2  on 1 df,   p=0
-Score (logrank) test = 252.3  on 1 df,   p=0
+Likelihood ratio test= 268.2  on 1 df,   p=0
+Wald test            = 264.3  on 1 df,   p=0
+Score (logrank) test = 265.6  on 1 df,   p=0
 
 
 
 ---Adjusted for measures of seniority using natural cubic splines---
 Call:
-coxph(formula = Surv(rep(1, 90296L), case) ~ Gender + ns(years_in_scopus_ptile, 
+coxph(formula = Surv(rep(1, 84452L), case) ~ Gender + ns(years_in_scopus_ptile, 
     knots = knots) + ns(h_index_ptile, knots = knots) + ns(n_pubs_ptile, 
     knots = knots) + strata(pub_id), data = icc_df_dedup, method = "exact")
 
-  n= 90233, number of events= 34047 
-   (63 observations deleted due to missingness)
+  n= 84394, number of events= 31821 
+   (58 observations deleted due to missingness)
 
                                               coef exp(coef) se(coef)       z Pr(>|z|)    
-Genderfemale                              -0.23475   0.79077  0.01759 -13.344  < 2e-16 ***
-ns(years_in_scopus_ptile, knots = knots)1  0.47450   1.60721  0.04914   9.656  < 2e-16 ***
-ns(years_in_scopus_ptile, knots = knots)2  0.53281   1.70371  0.04551  11.707  < 2e-16 ***
-ns(years_in_scopus_ptile, knots = knots)3  1.17346   3.23317  0.10183  11.524  < 2e-16 ***
-ns(years_in_scopus_ptile, knots = knots)4  0.98544   2.67899  0.04144  23.782  < 2e-16 ***
-ns(h_index_ptile, knots = knots)1         -0.18057   0.83479  0.06874  -2.627  0.00862 ** 
-ns(h_index_ptile, knots = knots)2          0.27172   1.31222  0.06655   4.083 4.45e-05 ***
-ns(h_index_ptile, knots = knots)3          0.38801   1.47405  0.13983   2.775  0.00552 ** 
-ns(h_index_ptile, knots = knots)4          0.90428   2.47015  0.07407  12.208  < 2e-16 ***
-ns(n_pubs_ptile, knots = knots)1           0.49174   1.63517  0.06967   7.058 1.68e-12 ***
-ns(n_pubs_ptile, knots = knots)2           0.20000   1.22140  0.06551   3.053  0.00227 ** 
-ns(n_pubs_ptile, knots = knots)3           0.08580   1.08959  0.14348   0.598  0.54984    
-ns(n_pubs_ptile, knots = knots)4          -1.49051   0.22526  0.07163 -20.808  < 2e-16 ***
+Genderfemale                              -0.23818   0.78806  0.01825 -13.049  < 2e-16 ***
+ns(years_in_scopus_ptile, knots = knots)1  0.52169   1.68487  0.05146  10.138  < 2e-16 ***
+ns(years_in_scopus_ptile, knots = knots)2  0.55745   1.74621  0.04740  11.760  < 2e-16 ***
+ns(years_in_scopus_ptile, knots = knots)3  1.23781   3.44806  0.10721  11.546  < 2e-16 ***
+ns(years_in_scopus_ptile, knots = knots)4  1.01402   2.75665  0.04285  23.665  < 2e-16 ***
+ns(h_index_ptile, knots = knots)1         -0.18454   0.83149  0.07206  -2.561 0.010439 *  
+ns(h_index_ptile, knots = knots)2          0.28316   1.32732  0.06941   4.080 4.51e-05 ***
+ns(h_index_ptile, knots = knots)3          0.40071   1.49289  0.14702   2.725 0.006421 ** 
+ns(h_index_ptile, knots = knots)4          0.90045   2.46072  0.07671  11.739  < 2e-16 ***
+ns(n_pubs_ptile, knots = knots)1           0.54542   1.72533  0.07337   7.434 1.05e-13 ***
+ns(n_pubs_ptile, knots = knots)2           0.26385   1.30194  0.06857   3.848 0.000119 ***
+ns(n_pubs_ptile, knots = knots)3           0.20704   1.23003  0.15159   1.366 0.172002    
+ns(n_pubs_ptile, knots = knots)4          -1.42262   0.24108  0.07425 -19.161  < 2e-16 ***
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
                                           exp(coef) exp(-coef) lower .95 upper .95
-Genderfemale                                 0.7908     1.2646    0.7640    0.8185
-ns(years_in_scopus_ptile, knots = knots)1    1.6072     0.6222    1.4596    1.7697
-ns(years_in_scopus_ptile, knots = knots)2    1.7037     0.5870    1.5583    1.8627
-ns(years_in_scopus_ptile, knots = knots)3    3.2332     0.3093    2.6482    3.9473
-ns(years_in_scopus_ptile, knots = knots)4    2.6790     0.3733    2.4700    2.9056
-ns(h_index_ptile, knots = knots)1            0.8348     1.1979    0.7296    0.9552
-ns(h_index_ptile, knots = knots)2            1.3122     0.7621    1.1517    1.4951
-ns(h_index_ptile, knots = knots)3            1.4740     0.6784    1.1207    1.9388
-ns(h_index_ptile, knots = knots)4            2.4702     0.4048    2.1364    2.8561
-ns(n_pubs_ptile, knots = knots)1             1.6352     0.6116    1.4265    1.8744
-ns(n_pubs_ptile, knots = knots)2             1.2214     0.8187    1.0742    1.3887
-ns(n_pubs_ptile, knots = knots)3             1.0896     0.9178    0.8225    1.4434
-ns(n_pubs_ptile, knots = knots)4             0.2253     4.4393    0.1958    0.2592
+Genderfemale                                 0.7881     1.2689    0.7604    0.8168
+ns(years_in_scopus_ptile, knots = knots)1    1.6849     0.5935    1.5232    1.8637
+ns(years_in_scopus_ptile, knots = knots)2    1.7462     0.5727    1.5913    1.9162
+ns(years_in_scopus_ptile, knots = knots)3    3.4481     0.2900    2.7946    4.2544
+ns(years_in_scopus_ptile, knots = knots)4    2.7567     0.3628    2.5346    2.9982
+ns(h_index_ptile, knots = knots)1            0.8315     1.2027    0.7220    0.9576
+ns(h_index_ptile, knots = knots)2            1.3273     0.7534    1.1585    1.5208
+ns(h_index_ptile, knots = knots)3            1.4929     0.6698    1.1191    1.9915
+ns(h_index_ptile, knots = knots)4            2.4607     0.4064    2.1172    2.8599
+ns(n_pubs_ptile, knots = knots)1             1.7253     0.5796    1.4942    1.9921
+ns(n_pubs_ptile, knots = knots)2             1.3019     0.7681    1.1382    1.4892
+ns(n_pubs_ptile, knots = knots)3             1.2300     0.8130    0.9139    1.6556
+ns(n_pubs_ptile, knots = knots)4             0.2411     4.1480    0.2084    0.2788
 
-Rsquare= 0.026   (max possible= 0.511 )
-Likelihood ratio test= 2392  on 13 df,   p=0
-Wald test            = 2224  on 13 df,   p=0
-Score (logrank) test = 2331  on 13 df,   p=0
+Rsquare= 0.028   (max possible= 0.511 )
+Likelihood ratio test= 2422  on 13 df,   p=0
+Wald test            = 2232  on 13 df,   p=0
+Score (logrank) test = 2350  on 13 df,   p=0
 
 
 
 ---Including interaction term between gender and years active---
 Call:
-coxph(formula = Surv(rep(1, 90296L), case) ~ Gender + years_in_scopus_ptile:factor(Gender, 
+coxph(formula = Surv(rep(1, 84452L), case) ~ Gender + years_in_scopus_ptile:factor(Gender, 
     levels = c("female", "male")) + ns(years_in_scopus_ptile, 
     knots = knots) + ns(h_index_ptile, knots = knots) + ns(n_pubs_ptile, 
     knots = knots) + strata(pub_id), data = icc_df_dedup, method = "exact")
 
-  n= 90233, number of events= 34047 
-   (63 observations deleted due to missingness)
+  n= 84394, number of events= 31821 
+   (58 observations deleted due to missingness)
 
-                                                                              coef exp(coef)  se(coef)       z Pr(>|z|)    
-Genderfemale                                                             -0.070355  0.932062  0.035351  -1.990 0.046567 *  
-ns(years_in_scopus_ptile, knots = knots)1                                 0.528813  1.696918  0.050247  10.524  < 2e-16 ***
-ns(years_in_scopus_ptile, knots = knots)2                                 0.605918  1.832934  0.047599  12.730  < 2e-16 ***
-ns(years_in_scopus_ptile, knots = knots)3                                 1.278732  3.592082  0.103810  12.318  < 2e-16 ***
-ns(years_in_scopus_ptile, knots = knots)4                                 1.054988  2.871940  0.043501  24.252  < 2e-16 ***
-ns(h_index_ptile, knots = knots)1                                        -0.193760  0.823855  0.068777  -2.817 0.004844 ** 
-ns(h_index_ptile, knots = knots)2                                         0.262397  1.300043  0.066587   3.941 8.12e-05 ***
-ns(h_index_ptile, knots = knots)3                                         0.367410  1.443990  0.139872   2.627 0.008620 ** 
-ns(h_index_ptile, knots = knots)4                                         0.900906  2.461833  0.074115  12.156  < 2e-16 ***
-ns(n_pubs_ptile, knots = knots)1                                          0.528392  1.696203  0.070028   7.545 4.51e-14 ***
-ns(n_pubs_ptile, knots = knots)2                                          0.232896  1.262250  0.065841   3.537 0.000404 ***
-ns(n_pubs_ptile, knots = knots)3                                          0.144273  1.155200  0.143925   1.002 0.316140    
-ns(n_pubs_ptile, knots = knots)4                                         -1.493332  0.224623  0.071707 -20.825  < 2e-16 ***
-years_in_scopus_ptile:factor(Gender, levels = c("female", "male"))female -0.032198  0.968315  0.006021  -5.347 8.93e-08 ***
-years_in_scopus_ptile:factor(Gender, levels = c("female", "male"))male          NA        NA  0.000000      NA       NA    
+                                                                              coef exp(coef)  se(coef)       z
+Genderfemale                                                             -0.058733  0.942958  0.037170  -1.580
+ns(years_in_scopus_ptile, knots = knots)1                                 0.580537  1.786997  0.052632  11.030
+ns(years_in_scopus_ptile, knots = knots)2                                 0.636925  1.890658  0.049628  12.834
+ns(years_in_scopus_ptile, knots = knots)3                                 1.352002  3.865155  0.109309  12.369
+ns(years_in_scopus_ptile, knots = knots)4                                 1.089612  2.973119  0.045065  24.179
+ns(h_index_ptile, knots = knots)1                                        -0.198842  0.819680  0.072101  -2.758
+ns(h_index_ptile, knots = knots)2                                         0.272681  1.313482  0.069451   3.926
+ns(h_index_ptile, knots = knots)3                                         0.377061  1.457994  0.147086   2.564
+ns(h_index_ptile, knots = knots)4                                         0.896518  2.451053  0.076759  11.680
+ns(n_pubs_ptile, knots = knots)1                                          0.585262  1.795461  0.073753   7.935
+ns(n_pubs_ptile, knots = knots)2                                          0.300179  1.350101  0.068940   4.354
+ns(n_pubs_ptile, knots = knots)3                                          0.273043  1.313956  0.152104   1.795
+ns(n_pubs_ptile, knots = knots)4                                         -1.425142  0.240474  0.074332 -19.173
+years_in_scopus_ptile:factor(Gender, levels = c("female", "male"))female -0.034738  0.965858  0.006286  -5.526
+years_in_scopus_ptile:factor(Gender, levels = c("female", "male"))male          NA        NA  0.000000      NA
+                                                                         Pr(>|z|)    
+Genderfemale                                                              0.11408    
+ns(years_in_scopus_ptile, knots = knots)1                                 < 2e-16 ***
+ns(years_in_scopus_ptile, knots = knots)2                                 < 2e-16 ***
+ns(years_in_scopus_ptile, knots = knots)3                                 < 2e-16 ***
+ns(years_in_scopus_ptile, knots = knots)4                                 < 2e-16 ***
+ns(h_index_ptile, knots = knots)1                                         0.00582 ** 
+ns(h_index_ptile, knots = knots)2                                        8.63e-05 ***
+ns(h_index_ptile, knots = knots)3                                         0.01036 *  
+ns(h_index_ptile, knots = knots)4                                         < 2e-16 ***
+ns(n_pubs_ptile, knots = knots)1                                         2.11e-15 ***
+ns(n_pubs_ptile, knots = knots)2                                         1.34e-05 ***
+ns(n_pubs_ptile, knots = knots)3                                          0.07264 .  
+ns(n_pubs_ptile, knots = knots)4                                          < 2e-16 ***
+years_in_scopus_ptile:factor(Gender, levels = c("female", "male"))female 3.27e-08 ***
+years_in_scopus_ptile:factor(Gender, levels = c("female", "male"))male         NA    
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
-                                                                         exp(coef) exp(-coef) lower .95 upper .95
-Genderfemale                                                                0.9321     1.0729    0.8697    0.9989
-ns(years_in_scopus_ptile, knots = knots)1                                   1.6969     0.5893    1.5378    1.8725
-ns(years_in_scopus_ptile, knots = knots)2                                   1.8329     0.5456    1.6697    2.0122
-ns(years_in_scopus_ptile, knots = knots)3                                   3.5921     0.2784    2.9308    4.4026
-ns(years_in_scopus_ptile, knots = knots)4                                   2.8719     0.3482    2.6372    3.1275
-ns(h_index_ptile, knots = knots)1                                           0.8239     1.2138    0.7200    0.9427
-ns(h_index_ptile, knots = knots)2                                           1.3000     0.7692    1.1410    1.4813
-ns(h_index_ptile, knots = knots)3                                           1.4440     0.6925    1.0978    1.8994
-ns(h_index_ptile, knots = knots)4                                           2.4618     0.4062    2.1290    2.8467
-ns(n_pubs_ptile, knots = knots)1                                            1.6962     0.5896    1.4787    1.9457
-ns(n_pubs_ptile, knots = knots)2                                            1.2622     0.7922    1.1094    1.4361
-ns(n_pubs_ptile, knots = knots)3                                            1.1552     0.8657    0.8713    1.5317
-ns(n_pubs_ptile, knots = knots)4                                            0.2246     4.4519    0.1952    0.2585
-years_in_scopus_ptile:factor(Gender, levels = c("female", "male"))female    0.9683     1.0327    0.9570    0.9798
-years_in_scopus_ptile:factor(Gender, levels = c("female", "male"))male          NA         NA        NA        NA
+                                                                         exp(coef) exp(-coef) lower .95
+Genderfemale                                                                0.9430     1.0605    0.8767
+ns(years_in_scopus_ptile, knots = knots)1                                   1.7870     0.5596    1.6118
+ns(years_in_scopus_ptile, knots = knots)2                                   1.8907     0.5289    1.7154
+ns(years_in_scopus_ptile, knots = knots)3                                   3.8652     0.2587    3.1198
+ns(years_in_scopus_ptile, knots = knots)4                                   2.9731     0.3363    2.7218
+ns(h_index_ptile, knots = knots)1                                           0.8197     1.2200    0.7117
+ns(h_index_ptile, knots = knots)2                                           1.3135     0.7613    1.1463
+ns(h_index_ptile, knots = knots)3                                           1.4580     0.6859    1.0928
+ns(h_index_ptile, knots = knots)4                                           2.4511     0.4080    2.1087
+ns(n_pubs_ptile, knots = knots)1                                            1.7955     0.5570    1.5538
+ns(n_pubs_ptile, knots = knots)2                                            1.3501     0.7407    1.1795
+ns(n_pubs_ptile, knots = knots)3                                            1.3140     0.7611    0.9752
+ns(n_pubs_ptile, knots = knots)4                                            0.2405     4.1584    0.2079
+years_in_scopus_ptile:factor(Gender, levels = c("female", "male"))female    0.9659     1.0353    0.9540
+years_in_scopus_ptile:factor(Gender, levels = c("female", "male"))male          NA         NA        NA
+                                                                         upper .95
+Genderfemale                                                                1.0142
+ns(years_in_scopus_ptile, knots = knots)1                                   1.9812
+ns(years_in_scopus_ptile, knots = knots)2                                   2.0838
+ns(years_in_scopus_ptile, knots = knots)3                                   4.7886
+ns(years_in_scopus_ptile, knots = knots)4                                   3.2477
+ns(h_index_ptile, knots = knots)1                                           0.9441
+ns(h_index_ptile, knots = knots)2                                           1.5050
+ns(h_index_ptile, knots = knots)3                                           1.9452
+ns(h_index_ptile, knots = knots)4                                           2.8490
+ns(n_pubs_ptile, knots = knots)1                                            2.0747
+ns(n_pubs_ptile, knots = knots)2                                            1.5454
+ns(n_pubs_ptile, knots = knots)3                                            1.7703
+ns(n_pubs_ptile, knots = knots)4                                            0.2782
+years_in_scopus_ptile:factor(Gender, levels = c("female", "male"))female    0.9778
+years_in_scopus_ptile:factor(Gender, levels = c("female", "male"))male          NA
 
-Rsquare= 0.026   (max possible= 0.511 )
-Likelihood ratio test= 2421  on 14 df,   p=0
-Wald test            = 2254  on 14 df,   p=0
-Score (logrank) test = 2364  on 14 df,   p=0
-
-
-
---------------------------------------------------------------------------------------
-
-
-
-------------- Excluding articles that may be replies to other authors ----------------
-
-
-
---------------------------------------------------------------------------------------
-
---------------------------------------------------
-
---------------------- Table S9 -------------------
-
---------------------------------------------------
-
-
-
-
----Unadjusted analysis---
-Call:
-coxph(formula = Surv(rep(1, 372119L), case) ~ Gender + strata(pub_id), 
-    data = icc_df_noreplies, method = "exact")
-
-  n= 372119, number of events= 43121 
-
-                 coef exp(coef) se(coef)      z Pr(>|z|)    
-Genderfemale -0.37075   0.69021  0.01278 -29.01   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-             exp(coef) exp(-coef) lower .95 upper .95
-Genderfemale    0.6902      1.449    0.6731    0.7077
-
-Rsquare= 0.002   (max possible= 0.376 )
-Likelihood ratio test= 876.5  on 1 df,   p=0
-Wald test            = 841.6  on 1 df,   p=0
-Score (logrank) test = 847.9  on 1 df,   p=0
-
-
-
----Adjusted for measures of seniority using natural cubic splines---
-Call:
-coxph(formula = Surv(rep(1, 372119L), case) ~ Gender + ns(years_in_scopus_ptile, 
-    knots = knots) + ns(h_index_ptile, knots = knots) + ns(n_pubs_ptile, 
-    knots = knots) + strata(pub_id), data = icc_df_noreplies, 
-    method = "exact")
-
-  n= 371737, number of events= 43121 
-   (382 observations deleted due to missingness)
-
-                                              coef exp(coef) se(coef)       z Pr(>|z|)    
-Genderfemale                              -0.25380   0.77585  0.01332 -19.056  < 2e-16 ***
-ns(years_in_scopus_ptile, knots = knots)1  0.35496   1.42612  0.03924   9.045  < 2e-16 ***
-ns(years_in_scopus_ptile, knots = knots)2  0.35664   1.42852  0.03464  10.295  < 2e-16 ***
-ns(years_in_scopus_ptile, knots = knots)3  0.87197   2.39161  0.08284  10.526  < 2e-16 ***
-ns(years_in_scopus_ptile, knots = knots)4  0.68921   1.99215  0.02919  23.614  < 2e-16 ***
-ns(h_index_ptile, knots = knots)1          0.26460   1.30291  0.05416   4.886 1.03e-06 ***
-ns(h_index_ptile, knots = knots)2          0.69085   1.99541  0.04979  13.877  < 2e-16 ***
-ns(h_index_ptile, knots = knots)3          1.23683   3.44466  0.11043  11.200  < 2e-16 ***
-ns(h_index_ptile, knots = knots)4          1.66081   5.26355  0.05114  32.477  < 2e-16 ***
-ns(n_pubs_ptile, knots = knots)1           0.39321   1.48173  0.05747   6.842 7.81e-12 ***
-ns(n_pubs_ptile, knots = knots)2           0.07145   1.07406  0.05107   1.399    0.162    
-ns(n_pubs_ptile, knots = knots)3           0.08967   1.09382  0.11873   0.755    0.450    
-ns(n_pubs_ptile, knots = knots)4          -1.17512   0.30878  0.05070 -23.179  < 2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-                                          exp(coef) exp(-coef) lower .95 upper .95
-Genderfemale                                 0.7758     1.2889    0.7559    0.7964
-ns(years_in_scopus_ptile, knots = knots)1    1.4261     0.7012    1.3205    1.5401
-ns(years_in_scopus_ptile, knots = knots)2    1.4285     0.7000    1.3347    1.5289
-ns(years_in_scopus_ptile, knots = knots)3    2.3916     0.4181    2.0332    2.8132
-ns(years_in_scopus_ptile, knots = knots)4    1.9921     0.5020    1.8814    2.1094
-ns(h_index_ptile, knots = knots)1            1.3029     0.7675    1.1717    1.4488
-ns(h_index_ptile, knots = knots)2            1.9954     0.5011    1.8099    2.1999
-ns(h_index_ptile, knots = knots)3            3.4447     0.2903    2.7742    4.2771
-ns(h_index_ptile, knots = knots)4            5.2635     0.1900    4.7616    5.8184
-ns(n_pubs_ptile, knots = knots)1             1.4817     0.6749    1.3239    1.6584
-ns(n_pubs_ptile, knots = knots)2             1.0741     0.9310    0.9717    1.1871
-ns(n_pubs_ptile, knots = knots)3             1.0938     0.9142    0.8667    1.3804
-ns(n_pubs_ptile, knots = knots)4             0.3088     3.2385    0.2796    0.3410
-
-Rsquare= 0.016   (max possible= 0.376 )
-Likelihood ratio test= 6031  on 13 df,   p=0
-Wald test            = 5554  on 13 df,   p=0
-Score (logrank) test = 5830  on 13 df,   p=0
-
-
-
----Including interaction term between gender and years active---
-Call:
-coxph(formula = Surv(rep(1, 372119L), case) ~ Gender + years_in_scopus_ptile:factor(Gender, 
-    levels = c("female", "male")) + ns(years_in_scopus_ptile, 
-    knots = knots) + ns(h_index_ptile, knots = knots) + ns(n_pubs_ptile, 
-    knots = knots) + strata(pub_id), data = icc_df_noreplies, 
-    method = "exact")
-
-  n= 371737, number of events= 43121 
-   (382 observations deleted due to missingness)
-
-                                                                              coef exp(coef)  se(coef)       z Pr(>|z|)    
-Genderfemale                                                             -0.066244  0.935902  0.028809  -2.299   0.0215 *  
-ns(years_in_scopus_ptile, knots = knots)1                                 0.409462  1.506007  0.040076  10.217  < 2e-16 ***
-ns(years_in_scopus_ptile, knots = knots)2                                 0.427789  1.533862  0.036099  11.850  < 2e-16 ***
-ns(years_in_scopus_ptile, knots = knots)3                                 0.976389  2.654853  0.084248  11.590  < 2e-16 ***
-ns(years_in_scopus_ptile, knots = knots)4                                 0.758705  2.135510  0.030777  24.652  < 2e-16 ***
-ns(h_index_ptile, knots = knots)1                                         0.247165  1.280391  0.054198   4.560 5.11e-06 ***
-ns(h_index_ptile, knots = knots)2                                         0.677989  1.969913  0.049802  13.614  < 2e-16 ***
-ns(h_index_ptile, knots = knots)3                                         1.206869  3.343000  0.110496  10.922  < 2e-16 ***
-ns(h_index_ptile, knots = knots)4                                         1.656441  5.240628  0.051146  32.387  < 2e-16 ***
-ns(n_pubs_ptile, knots = knots)1                                          0.435862  1.546295  0.057819   7.538 4.76e-14 ***
-ns(n_pubs_ptile, knots = knots)2                                          0.110441  1.116770  0.051407   2.148   0.0317 *  
-ns(n_pubs_ptile, knots = knots)3                                          0.158099  1.171283  0.119168   1.327   0.1846    
-ns(n_pubs_ptile, knots = knots)4                                         -1.171359  0.309945  0.050761 -23.076  < 2e-16 ***
-years_in_scopus_ptile:factor(Gender, levels = c("female", "male"))female -0.034466  0.966121  0.004726  -7.293 3.02e-13 ***
-years_in_scopus_ptile:factor(Gender, levels = c("female", "male"))male          NA        NA  0.000000      NA       NA    
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-                                                                         exp(coef) exp(-coef) lower .95 upper .95
-Genderfemale                                                                0.9359     1.0685    0.8845    0.9903
-ns(years_in_scopus_ptile, knots = knots)1                                   1.5060     0.6640    1.3922    1.6291
-ns(years_in_scopus_ptile, knots = knots)2                                   1.5339     0.6519    1.4291    1.6463
-ns(years_in_scopus_ptile, knots = knots)3                                   2.6549     0.3767    2.2508    3.1315
-ns(years_in_scopus_ptile, knots = knots)4                                   2.1355     0.4683    2.0105    2.2683
-ns(h_index_ptile, knots = knots)1                                           1.2804     0.7810    1.1514    1.4239
-ns(h_index_ptile, knots = knots)2                                           1.9699     0.5076    1.7867    2.1719
-ns(h_index_ptile, knots = knots)3                                           3.3430     0.2991    2.6920    4.1514
-ns(h_index_ptile, knots = knots)4                                           5.2406     0.1908    4.7408    5.7932
-ns(n_pubs_ptile, knots = knots)1                                            1.5463     0.6467    1.3806    1.7318
-ns(n_pubs_ptile, knots = knots)2                                            1.1168     0.8954    1.0097    1.2352
-ns(n_pubs_ptile, knots = knots)3                                            1.1713     0.8538    0.9273    1.4794
-ns(n_pubs_ptile, knots = knots)4                                            0.3099     3.2264    0.2806    0.3424
-years_in_scopus_ptile:factor(Gender, levels = c("female", "male"))female    0.9661     1.0351    0.9572    0.9751
-years_in_scopus_ptile:factor(Gender, levels = c("female", "male"))male          NA         NA        NA        NA
-
-Rsquare= 0.016   (max possible= 0.376 )
-Likelihood ratio test= 6085  on 14 df,   p=0
-Wald test            = 5653  on 14 df,   p=0
-Score (logrank) test = 5944  on 14 df,   p=0
+Rsquare= 0.029   (max possible= 0.511 )
+Likelihood ratio test= 2452  on 14 df,   p=0
+Wald test            = 2265  on 14 df,   p=0
+Score (logrank) test = 2386  on 14 df,   p=0
 

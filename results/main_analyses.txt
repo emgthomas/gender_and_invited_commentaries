@@ -30,7 +30,7 @@ Score (logrank) test = 858.7  on 1 df,   p=0
 
 
 
----Adjusted for measures of seniority using natural cubic splines---
+---Adjusted for author-level covariates using natural cubic splines---
 Call:
 coxph(formula = Surv(rep(1, 375233L), case) ~ Gender + ns(years_in_scopus_ptile, 
     knots = knots) + ns(h_index_ptile, knots = knots) + ns(n_pubs_ptile, 
