@@ -52,10 +52,21 @@ shinyUI(
                     multiple = FALSE,
                     selected = "No")
       ),
+      h5("eTable 6: Estimated journal specific odds-ratios for 1,410 journals"),
       downloadButton(
         "metaData",
-        "Download all data (eTable 6)"
-      )
+        "Download eTable 6"
+      ),
+      h5("Figure caption"),
+      p("Each circle represents the odds ratio estimated for a single journal. Circle diameter is inversely proportional to the standard error of the log odds ratio estimate.",
+        "Circle color represents the p-value for the null hypothesis of no association between gender and invited commentary authorship for that journal.",
+        "Hover over the circle for more information about that journal.",
+        "All odds ratios are adjusted for field of expertise through matching.",
+        "The number of matched sets (sample size) for each journal is given by the number of unique intra-citing commentary (ICC) authors.",
+        "The yearly number of ICCs included is the number of ICCs with a corresponding author whose gender could be inferred in that year.",
+        "There may be more ICCs than unique ICC authors due to multiple ICCs by the same author.",
+        "Data for all journals can be downloaded as eTable 6.",
+        style = "font-size: 8pt")
       ),
       
       column(8,

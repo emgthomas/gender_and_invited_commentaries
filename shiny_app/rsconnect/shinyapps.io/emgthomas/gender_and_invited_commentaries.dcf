@@ -5,9 +5,9 @@ account: emgthomas
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 1132126
-bundleId: 2371902
+bundleId: 2375653
 url: https://emgthomas.shinyapps.io/gender_and_invited_commentaries/
-when: 1567190795.73453
+when: 1567364170.57685
 asMultiple: FALSE
 asStatic: FALSE
-ignoredFiles: .Rapp.history
+ignoredFiles: .Rapp.history|~$eTable6.xlsx

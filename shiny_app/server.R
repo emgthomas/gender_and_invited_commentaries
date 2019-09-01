@@ -88,7 +88,7 @@ shinyServer(
                             tickvals=c(1/8,1/4,1/2,1,2,4,8),
                             ticktext=c("1/8","1/4","1/2",
                                        as.character(c(1,2,4,8)))),
-               xaxis = list(title="Journal Cite Score",range=c(0,18),tickmode="array"),
+               xaxis = list(title="Journal 2016 Cite Score",range=c(0,18),tickmode="array"),
                showlegend=F,
                font=list(size=16),
                hovermode="closest"
