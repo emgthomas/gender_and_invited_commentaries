@@ -161,8 +161,8 @@ female_cases_av_controls <- tapply(female_cases_controls$Gender=="female",
                                  mean)
 cat("\n\n---Number of matched sets with female cases---\n\n")
 length(female_cases_av_controls)
-cat("\n\n---Average number of female controls for female cases---\n\n")
-mean(female_cases_av_controls)
+cat("\n\n---Median and IQR for fraction of female controls in matched sets with female cases---\n\n")
+quantile(female_cases_av_controls,c(0.25,0.5,0.75))
 
 male_case_pubs <- icc_df[icc_df$case==1 & icc_df$Gender=="male",]$pub_id
 male_cases_controls <- icc_df[icc_df$case==0 & icc_df$pub_id %in% male_case_pubs,]
@@ -171,8 +171,8 @@ male_cases_av_controls <- tapply(male_cases_controls$Gender=="female",
                                         mean)
 cat("\n\n---Number of matched sets with male cases---\n\n")
 length(male_cases_av_controls)
-cat("\n\n---Average number of female controls for male cases---\n\n")
-mean(male_cases_av_controls)
+cat("\n\n---Median and IQR for fraction of female controls in matched sets with male cases---\n\n")
+quantile(male_cases_av_controls,c(0.25,0.5,0.75))
 
 cat("\n\n-----------------Number of controls per case included in analysis----------------\n\n")
 n_controls <- tapply(1-icc_df$case,icc_df$pub_id,sum)

@@ -116,8 +116,8 @@ OR_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~OR,
             name="Estimated OR as function\nof Cite Score") %>%
   # layout
   layout(yaxis = list(title="Odds Ratio (log scale)",range=c(-log(2.2),log(2.2)),type="log",
-                      tickvals=c(1/4,1/2,1,2,4,8),
-                      ticktext=c("1/8","1/4","1/2",
+                      tickvals=c(1/4,1/2,1,2,4),
+                      ticktext=c("1/4","1/2",
                                  as.character(c(1,2,4)))),
          xaxis = list(title="Journal Cite Score",range=c(0,18),tickmode="array"),
          showlegend=T,
@@ -125,7 +125,7 @@ OR_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~OR,
   )
 
 # Save as pdf
-export(OR_plot, "./results/eFigure_10a.pdf")
+export(OR_plot, "./results/eFigure_9a.pdf")
 
 cat("\n\n********** Adjusted model ************\n\n")
 

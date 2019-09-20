@@ -123,8 +123,8 @@ OR_plot <- plot_ly(subset(outputs_select2,n_cases>50), x = ~citescore, y= ~OR,he
             name="Estimated OR as function\nof Cite Score") %>%
   # layout
   layout(yaxis = list(title="Odds Ratio (log scale)",range=c(-log(2.2),log(2.2)),type="log",
-                      tickvals=c(1/4,1/2,1,2,4,8),
-                      ticktext=c("1/8","1/4","1/2",
+                      tickvals=c(1/4,1/2,1,2,4),
+                      ticktext=c("1/4","1/2",
                                  as.character(c(1,2,4)))),
          xaxis = list(title="Journal Cite Score",range=c(0,18),tickmode="array"),
          showlegend=T,
@@ -244,7 +244,9 @@ outputs_topics <- data.frame(ASJC=c(as.character(topic_counts$Code[1:n_topics]))
                              n_cases_1stage=integer(n_topics),
                              n_journals_1stage=integer(n_topics),
                              OR_1stage=numeric(n_topics),ci.lb_1stage=numeric(n_topics),ci.ub_1stage=numeric(n_topics),
+                             pval_1stage=numeric(n_topics),
                              OR_adj_1stage=numeric(n_topics),ci.lb_adj_1stage=numeric(n_topics),ci.ub_adj_1stage=numeric(n_topics),
+                             pval_adj_1stage=numeric(n_topics),
                              n_cases_2stage=integer(n_topics),
                              n_journals_2stage=integer(n_topics),
                              OR_2stage=numeric(n_topics),ci.lb_2stage=numeric(n_topics),ci.ub_2stage=numeric(n_topics),
@@ -282,6 +284,7 @@ for(i in 1:n_topics){
   cat("\n\n--- Unadjusted meta analysis, one-stage:\n")
   print(meta1_summ)
   outputs_topics[i,c("OR_1stage","ci.lb_1stage","ci.ub_1stage")] <- meta1_summ$conf.int[1,c(1,3,4)]
+  outputs_topics$pval_1stage[i] <- meta1_summ$coefficients[1,5]
   
   cat("\n\n--- Adjusted for author seniority, one-stage:\n")
   meta1_adj <- clogit(case ~ Gender +  
@@ -293,6 +296,7 @@ for(i in 1:n_topics){
   meta1_adj_summ <- summary(meta1_adj)
   print(meta1_adj_summ)
   outputs_topics[i,c("OR_adj_1stage","ci.lb_adj_1stage","ci.ub_adj_1stage")] <- meta1_adj_summ$conf.int[1,c(1,3,4)]
+  outputs_topics$pval_adj_1stage[i] <- meta1_adj_summ$coefficients[1,5]
   
   outputs_topics$n_cases_1stage[i] <- sum(icc_topic_i$case)
   outputs_topics$n_journals_1stage[i] <- length(unique(icc_topic_i$pub_source_title))
@@ -326,8 +330,8 @@ outputs_topics <- outputs_topics[order(outputs_topics$ASJC),]
 outputs_topics[outputs_topics$ci.lb_adj_2stage < 0.1,c("OR_adj_2stage","ci.lb_adj_2stage","ci.ub_adj_2stage")] <- NA
 
 # How many significant effects?
-cat(sum(outputs_topics$ci.ub_1stage < 1),"of",nrow(outputs_topics),"topic-specific ORs showed significant bias against women.")
-cat(sum(outputs_topics$ci.ub_adj_1stage < 1),"of",nrow(outputs_topics),"topic-specific fully adjusted ORs showed significant bias against women.")
+cat(sum(outputs_topics$pval_1stage < 0.05),"of",nrow(outputs_topics),"topic-specific ORs showed significant bias against women.")
+cat(sum(outputs_topics$pval_adj_1stage < 0.05),"of",nrow(outputs_topics),"topic-specific fully adjusted ORs showed significant bias against women.")
 
 save(outputs_topics,file="./results/secondary_analyses.Rdata")
 
@@ -338,27 +342,32 @@ load("./results/two_stage_analyses.Rdata")
 load("./results/secondary_analyses.Rdata")
 
 ## one-stage meta-analysis
-tablehead <- rbind(c("Topic","ASJC","Journals","Cases","Model 1 OR (95%CI)","Model 2 OR (95%CI)"),
-                   rep(NA,6)
+tablehead <- rbind(c("Topic","ASJC","Journals","Cases","Model 1 OR (95%CI)","Model 1 P-Value","Model 2 OR (95%CI)","Model 2 P-Value"),
+                   rep(NA,8)
                    )
 tablenum <- cbind(as.matrix(outputs_topics[,c("topic","ASJC","n_journals_1stage","n_cases_1stage")]),
                   sapply(1:nrow(outputs_topics),formatting_fun,
                          or=outputs_topics$OR_1stage,ci.lb=outputs_topics$ci.lb_1stage,
                          ci.ub=outputs_topics$ci.ub_1stage),
+                  sprintf("%.3f",outputs_topics$pval_1stage),
                   sapply(1:nrow(outputs_topics),formatting_fun,
                          or=outputs_topics$OR_adj_1stage,ci.lb=outputs_topics$ci.lb_adj_1stage,
-                         ci.ub=outputs_topics$ci.ub_adj_1stage)
+                         ci.ub=outputs_topics$ci.ub_adj_1stage),
+                  sprintf("%.3f",outputs_topics$pval_adj_1stage)
                    )
-tablefoot <- rbind(rep(NA,6),
+tablefoot <- rbind(rep(NA,8),
                    c("All","",as.character(length(unique(icc_df$pub_source_title))),as.character(sum(icc_df$case)),
                    formatting_fun(1,summary(all_1stage)$conf.int[1,1],
                                   summary(all_1stage)$conf.int[1,3],
                                   summary(all_1stage)$conf.int[1,4]),
+                   sprintf("%.3f",summary(all_1stage)$coefficients[1,5]),
                    formatting_fun(1,summary(all_1stage_adj)$conf.int[1,1],
                                   summary(all_1stage_adj)$conf.int[1,3],
-                                  summary(all_1stage_adj)$conf.int[1,4]))
+                                  summary(all_1stage_adj)$conf.int[1,4]),
+                   sprintf("%.3f",summary(all_1stage_adj)$coefficients[1,5]))
                    )
 tabletext <- rbind(tablehead,tablenum,tablefoot)
+tabletext[tabletext=="0.000"] <- "<0.001"
 
 means <- rbind(rep(NA,2),rep(NA,2),
                outputs_topics[,c("OR_1stage","OR_adj_1stage")],
@@ -379,7 +388,7 @@ uppers <- rbind(rep(NA,2),rep(NA,2),
 # make plot/table
 my_ticks <- c(1/4,1/2,1,2,4)
 attr(my_ticks,"labels") <- c("1/4","1/2","1","2","4")
-pdf(file="./results/figure_3.pdf",width=14,height=16)
+pdf(file="./results/figure_3.pdf",width=16,height=16)
 forestplot(tabletext,mean=means,lower=lowers,upper=uppers,
            is.summary=c(TRUE,TRUE,rep(FALSE,nrow(outputs_topics)),TRUE),
            align=c("l",rep("r",ncol(tabletext)-1)),
@@ -406,6 +415,9 @@ forestplot(tabletext,mean=means,lower=lowers,upper=uppers,
 dev.off()
 
 ## 2-stage meta-analysis
+tablehead <- rbind(c("Topic","ASJC","Journals","Cases","Model 1 OR (95%CI)","Model 2 OR (95%CI)"),
+                   rep(NA,8)
+)
 tablenum <- cbind(as.matrix(outputs_topics[,c("topic","ASJC","n_journals_2stage","n_cases_2stage")]),
                   sapply(1:nrow(outputs_topics),formatting_fun,
                          or=outputs_topics$OR_2stage,ci.lb=outputs_topics$ci.lb_2stage,

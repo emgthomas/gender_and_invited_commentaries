@@ -8,7 +8,7 @@ topics_list <- readRDS("topics_list.rds")
 shinyUI(
   fluidPage(
     
-    titlePanel("eFigure 8: Estimated journal-specific odds ratio vs journal Cite Score"),
+    titlePanel("eAppendix: Estimated journal-specific odds ratio vs journal Cite Score"),
     
     fluidRow(
     
@@ -52,10 +52,10 @@ shinyUI(
                     multiple = FALSE,
                     selected = "No")
       ),
-      h5("eTable 6: Estimated journal specific odds-ratios for 1,410 journals"),
+      h5("eAppendix Data (Excel format)"),
       downloadButton(
         "metaData",
-        "Download eTable 6"
+        "Download"
       ),
       h5("Figure caption"),
       p("Each circle represents the odds ratio estimated for a single journal. Circle diameter is inversely proportional to the standard error of the log odds ratio estimate.",
@@ -63,10 +63,10 @@ shinyUI(
         "Hover over the circle for more information about that journal.",
         "All odds ratios are adjusted for field of expertise through matching.",
         "The number of matched sets (sample size) for each journal is given by the number of unique intra-citing commentary (ICC) authors.",
-        "The yearly number of ICCs included is the number of ICCs with a corresponding author whose gender could be inferred in that year.",
+        "The number of ICCs included is the number of ICCs with a corresponding author whose gender could be inferred.",
         "There may be more ICCs than unique ICC authors due to multiple ICCs by the same author.",
-        "Data for all journals can be downloaded as eTable 6.",
-        style = "font-size: 8pt")
+        "Data for all journals can be downloaded via the link above.",
+        style = "font-size: 10pt")
       ),
       
       column(8,

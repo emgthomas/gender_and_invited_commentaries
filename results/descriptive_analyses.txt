@@ -1,4 +1,4 @@
---------------------------------------------------
+	--------------------------------------------------
 
 --------------------- Table 1 --------------------
 
@@ -378,9 +378,10 @@ All
 [1] 11047
 
 
----Average number of female controls for female cases---
+---Median and IQR for fraction of female controls in matched sets with female cases---
 
-[1] 0.3996739
+      25%       50%       75% 
+0.2222222 0.4000000 0.5555556 
 
 
 ---Number of matched sets with male cases---
@@ -388,9 +389,10 @@ All
 [1] 35188
 
 
----Average number of female controls for male cases---
+---Median and IQR for fraction of female controls in matched sets with male cases---
 
-[1] 0.2712377
+      25%       50%       75% 
+0.1111111 0.2500000 0.4000000 
 
 
 -----------------Number of controls per case included in analysis----------------

@@ -143,11 +143,11 @@ shinyServer(
       
     })
     
-    # setup to allow download of eTable 6
+    # setup to allow download of metadata
     output$metaData <- downloadHandler(
-      filename="eTable6.xlsx",  # desired file name on client 
+      filename="eAppendix_data.xlsx",  # desired file name on client 
       content=function(file) {
-        file.copy("eTable6.xlsx", file)
+        file.copy("eAppendix_data.xlsx", file)
       }
     )
     
