@@ -37,7 +37,7 @@ cat("--------------------------------------------------\n\n")
 
 cat("\n\n------------ One-stage meta-analysis, all journals ----------------\n\n")
 
-all_1stage <- clogit(case ~ Gender + strata(pub_id), data = icc_df)
+all_1stage <- clogit(case ~ Gender + strata(pub_id), data = icc_df, method = "efron")
 cat("---Unadjusted analysis---\n")
 summary(all_1stage)
 
@@ -159,9 +159,7 @@ OR_df$ci.ub <- OR_df$OR*exp(1.96*logOR_se)
 
 # Get number of years active corresponding approximately to each decile
 dec1 <- unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>0.9 & icc_df$years_in_scopus_ptile<1.1 & !is.na(icc_df$years_in_scopus_ptile)])
-# dec3 <- unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>2.8 & icc_df$years_in_scopus_ptile<3.2 & !is.na(icc_df$years_in_scopus_ptile)])
-dec5 <- unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>3.8 & icc_df$years_in_scopus_ptile<4.2 & !is.na(icc_df$years_in_scopus_ptile)])
-# dec7 <-  unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>6.9 & icc_df$years_in_scopus_ptile<7.1 & !is.na(icc_df$years_in_scopus_ptile)])
+dec5 <- unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>4.85 & icc_df$years_in_scopus_ptile<5.15 & !is.na(icc_df$years_in_scopus_ptile)])
 dec9 <- unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>8.94 & icc_df$years_in_scopus_ptile<9.06 & !is.na(icc_df$years_in_scopus_ptile)])
 years_YiS <- c(dec1,dec5,dec9)
 axis_labels <- data.frame(ptile_label=c("10th","50th","90th"))
@@ -227,14 +225,14 @@ OR_plot_YiS <- plot_ly(OR_df, x = ~OR, y= ~ptile, type="scatter", mode="lines",
                       ticks="outside",
                       side="left"),
          yaxis2 = list(title="Years Active",
-                      range=c(100,1),
-                      tickvals=axis_labels$ptile,
-                      ticktext=axis_labels$years_label,
-                      showline = TRUE,
-                      linewidth=2,
-                      showgrid=FALSE,
-                      ticks="outside",
-                      side="right"),
+                       range=c(100,1),
+                       tickvals=axis_labels$ptile,
+                       ticktext=axis_labels$years_label,
+                       showline = TRUE,
+                       linewidth=2,
+                       showgrid=FALSE,
+                       ticks="outside",
+                       side="right"),
          showlegend=T,
          legend = list(x = 1.3, y = 0.4),
          margin=m,
@@ -276,11 +274,8 @@ tablehead <- rbind(c("Years Active","Percentile of \nYears Active","OR (95%CI)")
                    rep(NA,3))
 
 # Get number of years active corresponding approximately to each decile
-dec1 <- unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>0.9 & icc_df$years_in_scopus_ptile<1.1 & !is.na(icc_df$years_in_scopus_ptile)])
 dec3 <- unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>2.8 & icc_df$years_in_scopus_ptile<3.2 & !is.na(icc_df$years_in_scopus_ptile)])
-dec5 <- unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>3.8 & icc_df$years_in_scopus_ptile<4.2 & !is.na(icc_df$years_in_scopus_ptile)])
 dec7 <-  unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>6.9 & icc_df$years_in_scopus_ptile<7.1 & !is.na(icc_df$years_in_scopus_ptile)])
-dec9 <- unique(icc_df$years_in_scopus[icc_df$years_in_scopus_ptile>8.94 & icc_df$years_in_scopus_ptile<9.06 & !is.na(icc_df$years_in_scopus_ptile)])
 years <- c(dec1,dec3,dec5,dec7,dec9)
 tablenum <- cbind(years,
                   as.character(OR_df$ptile_YiS),
@@ -468,10 +463,10 @@ OR_df$ci.ub <- OR_df$OR*exp(1.96*logOR_se)
 tablehead <- rbind(c("H-Index","Percentile of \nH-Index","OR (95%CI)"),
                    rep(NA,3))
 
-# Get number of years active corresponding approximately to each decile
+# Get h-index corresponding approximately to each decile
 dec1 <- unique(icc_df$H_Index[icc_df$h_index_ptile>0.9 & icc_df$h_index_ptile<1.1 & !is.na(icc_df$h_index_ptile)])
 dec3 <- unique(icc_df$H_Index[icc_df$h_index_ptile>2.8 & icc_df$h_index_ptile<3.2 & !is.na(icc_df$h_index_ptile)])
-dec5 <- unique(icc_df$H_Index[icc_df$h_index_ptile>3.8 & icc_df$h_index_ptile<4.2 & !is.na(icc_df$h_index_ptile)])
+dec5 <- unique(icc_df$H_Index[icc_df$h_index_ptile>4.8 & icc_df$h_index_ptile<5.2 & !is.na(icc_df$h_index_ptile)])
 dec7 <-  unique(icc_df$H_Index[icc_df$h_index_ptile>6.9 & icc_df$h_index_ptile<7.1 & !is.na(icc_df$h_index_ptile)])
 dec9 <- unique(icc_df$H_Index[icc_df$h_index_ptile>8.98 & icc_df$h_index_ptile<9.02 & !is.na(icc_df$h_index_ptile)])
 h_indices <- c(dec1,dec3,dec5,dec7,dec9)
@@ -652,7 +647,7 @@ tablehead <- rbind(c("Number of\n Publications","Percentile of Number\n of Publi
 # Get number of years active corresponding approximately to each decile
 dec1 <- unique(icc_df$Total_Publications_In_Scopus[icc_df$n_pubs_ptile>0.95 & icc_df$n_pubs_ptile<1.05 & !is.na(icc_df$n_pubs_ptile)])
 dec3 <- unique(icc_df$Total_Publications_In_Scopus[icc_df$n_pubs_ptile>2.95 & icc_df$n_pubs_ptile<3.05 & !is.na(icc_df$n_pubs_ptile)])
-dec5 <- unique(icc_df$Total_Publications_In_Scopus[icc_df$n_pubs_ptile>3.95 & icc_df$n_pubs_ptile<4.05 & !is.na(icc_df$n_pubs_ptile)])
+dec5 <- unique(icc_df$Total_Publications_In_Scopus[icc_df$n_pubs_ptile>4.972 & icc_df$n_pubs_ptile<5.017 & !is.na(icc_df$n_pubs_ptile)])
 dec7 <-  unique(icc_df$Total_Publications_In_Scopus[icc_df$n_pubs_ptile>6.98 & icc_df$n_pubs_ptile<7.02 & !is.na(icc_df$n_pubs_ptile)])
 dec9 <- unique(icc_df$Total_Publications_In_Scopus[icc_df$n_pubs_ptile>8.995 & icc_df$n_pubs_ptile<9.005 & !is.na(icc_df$n_pubs_ptile)])
 n_pubs <- c(dec1,dec3,dec5,dec7,dec9)
@@ -830,7 +825,7 @@ outputs_df <- data.frame(journal=journals$pub_sourceid,
                          included=journals$include.journal)
 
 cat("\n\nAttempting to run models for",nrow(journals),"journals.
-Journals with insufficient data will be excluded.\n\n")
+    Journals with insufficient data will be excluded.\n\n")
 for(i in 1:nrow(journals)){
   # Unadjusted model
   mod <- tryCatch(clogit(case ~ Gender + strata(pub_id), 
@@ -944,8 +939,8 @@ saveRDS(topics_list,"./shiny_app/topics_list.rds")
 
 # save table of journal-specific results
 outputs_select$topics_list <- apply(outputs_select[,topics_list],1,
-                                   function(x,topics_list) paste(topics_list[x==1],collapse="; ",sep=""),
-                                   topics_list=topics_list)
+                                    function(x,topics_list) paste(topics_list[x==1],collapse="; ",sep=""),
+                                    topics_list=topics_list)
 outputs_select[,topics_list] <- NULL
 outputs_select[,c("effect","sd","effect_adj","sd_adj","included","node_size","node_size_adj","effect_main",
                   "n_cases_int","sd_main","effect_int","sd_int")] <- NULL
@@ -960,11 +955,11 @@ outputs_select$pval_adj <- sprintf(outputs_select$pval_adj, fmt="%.3f")
 outputs_select <- outputs_select[order(outputs_select$sourcetitle),]
 outputs_select$journal <- as.character(outputs_select$journal)
 outputs_select <- outputs_select[,c("journal","sourcetitle","citescore",
-                  "n_cases",
-                  "OR","ci_lower","ci_upper","pval",
-                  "n_cases_adj",
-                  "OR","ci_lower","ci_upper","pval_adj",
-                  "npubs.2013","npubs.2014","npubs.2015","npubs.2016","npubs.2017","topics_list")]
+                                    "n_cases",
+                                    "OR","ci_lower","ci_upper","pval",
+                                    "n_cases_adj",
+                                    "OR","ci_lower","ci_upper","pval_adj",
+                                    "npubs.2013","npubs.2014","npubs.2015","npubs.2016","npubs.2017","topics_list")]
 names(outputs_select) <- c("Scopus Source Identifier","Journal","2016 Cite Score",
                            "Number of Cases (Model 1)",
                            "Odds Ratio (Model 1)","95% CI Lower Bound (Model 1)","95% CI Upper Bound (Model 1)","P-Value (Model 1)",
