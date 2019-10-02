@@ -8,7 +8,7 @@ topics_list <- readRDS("topics_list.rds")
 shinyUI(
   fluidPage(
     
-    titlePanel("eAppendix: Estimated journal-specific odds ratio vs journal Cite Score"),
+    titlePanel("eAppendix 3: Estimated journal-specific odds ratio vs journal Cite Score"),
     
     fluidRow(
     
@@ -52,7 +52,7 @@ shinyUI(
                     multiple = FALSE,
                     selected = "No")
       ),
-      h5("eAppendix Data (Excel format)"),
+      h5("eAppendix 3 Data (Excel format)"),
       downloadButton(
         "metaData",
         "Download"

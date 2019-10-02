@@ -37,7 +37,7 @@ cat("--------------------------------------------------\n\n")
 
 cat("\n\n------------ One-stage meta-analysis, all journals ----------------\n\n")
 
-all_1stage <- clogit(case ~ Gender + strata(pub_id), data = icc_df, method = "efron")
+all_1stage <- clogit(case ~ Gender + strata(pub_id), data = icc_df)
 cat("---Unadjusted analysis---\n")
 summary(all_1stage)
 
